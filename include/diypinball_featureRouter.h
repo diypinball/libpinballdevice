@@ -35,6 +35,7 @@ struct diypinball_featureDecoderInstance {
 };
 
 void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* context, diypinball_featureRouterInit_t* init);
+void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* context);
 
 #ifdef __cplusplus
 }

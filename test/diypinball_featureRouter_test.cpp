@@ -28,3 +28,22 @@ TEST(diypinball_featureRouter_test, init_zeros_structure)
     ASSERT_EQ(instance.boardAddress, init.boardAddress);
     ASSERT_EQ(instance.canSendHandler, testCanSendHandler);
 }
+
+TEST(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_featureRouter_deinit(&instance);
+
+    for(uint8_t i=0; i<16; i++) {
+        ASSERT_EQ(NULL, instance.features[i]);
+    }
+
+    ASSERT_EQ(instance.boardAddress, 0);
+    ASSERT_EQ(NULL, instance.canSendHandler);
+}

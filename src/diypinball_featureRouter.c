@@ -15,3 +15,16 @@ void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* context, 
 
     return;
 }
+
+void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* context) {
+	uint8_t i;
+
+    for(i=0; i<16; i++) {
+        context->features[i] = NULL;
+    }
+
+	context->boardAddress = 0;
+	context->canSendHandler = NULL;
+
+	return;
+}
