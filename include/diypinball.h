@@ -32,6 +32,11 @@ typedef struct diypinball_pinballMessage {
     uint8_t data[8];
 } diypinball_pinballMessage_t;
 
+typedef enum diypinball_result {
+    RESULT_SUCCESS,
+    RESULT_FAIL_INVALID_PARAMETER
+} diypinball_result_t;
+
 typedef void (*diypinball_canMessageSendHandler)(diypinball_canMessage_t *message);
 
 #ifdef __cplusplus

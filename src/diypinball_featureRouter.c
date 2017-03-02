@@ -28,3 +28,14 @@ void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* context
 
 	return;
 }
+
+diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* context, diypinball_featureDecoderInstance_t* featureDecoder) {
+	uint8_t featureNum = featureDecoder->featureNum;
+
+    if((featureNum >= 0) && (featureNum < 16)) {
+        context->features[featureNum] = featureDecoder;
+        return RESULT_SUCCESS;
+    } else {
+        return RESULT_FAIL_INVALID_PARAMETER;
+    }
+}
