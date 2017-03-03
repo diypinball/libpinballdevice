@@ -40,6 +40,7 @@ diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouter
 void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* context, diypinball_canMessage_t* message);
 void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_t *context, uint16_t *bitmap);
 void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t* context, uint32_t tickNum);
+void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstance_t *routerInstance, diypinball_pinballMessage_t *message);
 
 #ifdef __cplusplus
 }

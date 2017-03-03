@@ -85,4 +85,34 @@ void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t
             (context->features[i]->tickHandler)(context->features[i]->instance, tickNum);
         }
     }
-} 
+}
+
+void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstance_t *routerInstance, diypinball_pinballMessage_t *message) {
+    diypinball_canMessage_t encodedMessage;
+
+    uint8_t boardAddress;
+
+    if(message->messageType == MESSAGE_RESPONSE) {
+        boardAddress = routerInstance->boardAddress;
+        encodedMessage.rtr = 0;
+    } else if(message->messageType == MESSAGE_COMMAND) {
+        boardAddress = message->boardAddress;
+        encodedMessage.rtr = 0;
+    } else if(message->messageType == MESSAGE_REQUEST) {
+        boardAddress = message->boardAddress;
+        encodedMessage.rtr = 1;
+    }
+
+    encodedMessage.id = ((message->priority & 0x0f) << 25) | 
+                        ((message->unitSpecific & 0x01) << 24) | 
+                        (boardAddress << 16) | 
+                        ((message->featureType & 0x0f) << 12) | 
+                        ((message->featureNum & 0x0f) << 8) | 
+                        ((message->function & 0x0f) << 4) | 
+                        (message->reserved & 0x0f);
+
+    encodedMessage.dlc = message->dataLength;
+    memcpy(encodedMessage.data, message->data, 8);
+
+    return routerInstance->canSendHandler(&encodedMessage);
+}

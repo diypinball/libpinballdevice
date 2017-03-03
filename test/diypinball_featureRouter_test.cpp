@@ -50,6 +50,23 @@ MATCHER_P(PinballMessageEqual, message, "") {
     return !(!fieldFlag);
 }
 
+MATCHER_P(CanMessageEqual, message, "") {
+    uint8_t fieldFlag = (arg->id == message.id) &&
+        (arg->rtr == message.rtr) &&
+        (arg->dlc == message.dlc);
+
+    uint8_t i;
+    if(fieldFlag) {
+        for(i=0; i < arg->dlc; i++) {
+            if(arg->data[i] != message.data[i]) {
+                fieldFlag = 0;
+                break;
+            }
+        }
+    }
+    return !(!fieldFlag);
+}
+
 extern "C" {
     static void testCanSendHandler(diypinball_canMessage_t *message) {
         CANSendImpl->testCanSendHandler(message);
@@ -437,4 +454,151 @@ TEST(diypinball_featureRouter_test, two_features_millisecond_tick) {
 
     Handler1 = NULL;
     Handler2 = NULL;
+}
+
+TEST(diypinball_featureRouter_test, send_message_response) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_pinballMessage_t pinballMessage;
+    pinballMessage.priority = 3;
+    pinballMessage.unitSpecific = 1;
+    pinballMessage.boardAddress = 43;
+    pinballMessage.featureType = 2;
+    pinballMessage.featureNum = 5;
+    pinballMessage.function = 6;
+    pinballMessage.reserved = 0;
+    pinballMessage.messageType = MESSAGE_RESPONSE;
+    pinballMessage.dataLength = 8;
+    pinballMessage.data[0] = 255;
+    pinballMessage.data[1] = 127;
+    pinballMessage.data[2] = 63;
+    pinballMessage.data[3] = 31;
+    pinballMessage.data[4] = 15;
+    pinballMessage.data[5] = 7;
+    pinballMessage.data[6] = 3;
+    pinballMessage.data[7] = 1;
+
+    diypinball_canMessage_t expectedCANMessage;
+    expectedCANMessage.id = (3 << 25) | (1 << 24) | (init.boardAddress << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 8;
+    expectedCANMessage.data[0] = 255;
+    expectedCANMessage.data[1] = 127;
+    expectedCANMessage.data[2] = 63;
+    expectedCANMessage.data[3] = 31;
+    expectedCANMessage.data[4] = 15;
+    expectedCANMessage.data[5] = 7;
+    expectedCANMessage.data[6] = 3;
+    expectedCANMessage.data[7] = 1;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
+}
+
+TEST(diypinball_featureRouter_test, send_message_command) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_pinballMessage_t pinballMessage;
+    pinballMessage.priority = 3;
+    pinballMessage.unitSpecific = 1;
+    pinballMessage.boardAddress = 43;
+    pinballMessage.featureType = 2;
+    pinballMessage.featureNum = 5;
+    pinballMessage.function = 6;
+    pinballMessage.reserved = 0;
+    pinballMessage.messageType = MESSAGE_COMMAND;
+    pinballMessage.dataLength = 8;
+    pinballMessage.data[0] = 255;
+    pinballMessage.data[1] = 127;
+    pinballMessage.data[2] = 63;
+    pinballMessage.data[3] = 31;
+    pinballMessage.data[4] = 15;
+    pinballMessage.data[5] = 7;
+    pinballMessage.data[6] = 3;
+    pinballMessage.data[7] = 1;
+
+    diypinball_canMessage_t expectedCANMessage;
+    expectedCANMessage.id = (3 << 25) | (1 << 24) | (43 << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 8;
+    expectedCANMessage.data[0] = 255;
+    expectedCANMessage.data[1] = 127;
+    expectedCANMessage.data[2] = 63;
+    expectedCANMessage.data[3] = 31;
+    expectedCANMessage.data[4] = 15;
+    expectedCANMessage.data[5] = 7;
+    expectedCANMessage.data[6] = 3;
+    expectedCANMessage.data[7] = 1;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
+}
+
+TEST(diypinball_featureRouter_test, send_message_request) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_pinballMessage_t pinballMessage;
+    pinballMessage.priority = 3;
+    pinballMessage.unitSpecific = 1;
+    pinballMessage.boardAddress = 43;
+    pinballMessage.featureType = 2;
+    pinballMessage.featureNum = 5;
+    pinballMessage.function = 6;
+    pinballMessage.reserved = 0;
+    pinballMessage.messageType = MESSAGE_REQUEST;
+    pinballMessage.dataLength = 8;
+    pinballMessage.data[0] = 255;
+    pinballMessage.data[1] = 127;
+    pinballMessage.data[2] = 63;
+    pinballMessage.data[3] = 31;
+    pinballMessage.data[4] = 15;
+    pinballMessage.data[5] = 7;
+    pinballMessage.data[6] = 3;
+    pinballMessage.data[7] = 1;
+
+    diypinball_canMessage_t expectedCANMessage;
+    expectedCANMessage.id = (3 << 25) | (1 << 24) | (43 << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
+    expectedCANMessage.rtr = 1;
+    expectedCANMessage.dlc = 8;
+    expectedCANMessage.data[0] = 255;
+    expectedCANMessage.data[1] = 127;
+    expectedCANMessage.data[2] = 63;
+    expectedCANMessage.data[3] = 31;
+    expectedCANMessage.data[4] = 15;
+    expectedCANMessage.data[5] = 7;
+    expectedCANMessage.data[6] = 3;
+    expectedCANMessage.data[7] = 1;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
 }
