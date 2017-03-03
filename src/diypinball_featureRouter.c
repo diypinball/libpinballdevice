@@ -18,20 +18,20 @@ void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* context, 
 }
 
 void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* context) {
-	uint8_t i;
+    uint8_t i;
 
     for(i=0; i<16; i++) {
         context->features[i] = NULL;
     }
 
-	context->boardAddress = 0;
-	context->canSendHandler = NULL;
+    context->boardAddress = 0;
+    context->canSendHandler = NULL;
 
-	return;
+    return;
 }
 
 diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* context, diypinball_featureDecoderInstance_t* featureDecoder) {
-	uint8_t featureNum = featureDecoder->featureNum;
+    uint8_t featureNum = featureDecoder->featureNum;
 
     if((featureNum >= 0) && (featureNum < 16)) {
         context->features[featureNum] = featureDecoder;
@@ -42,7 +42,7 @@ diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouter
 }
 
 void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* context, diypinball_canMessage_t* message) {
-	diypinball_pinballMessage_t decodedMessage;
+    diypinball_pinballMessage_t decodedMessage;
 
     decodedMessage.priority = (message->id & 0x1E000000) >> 25;
     decodedMessage.unitSpecific = (message->id & 0x01000000) >> 24;
