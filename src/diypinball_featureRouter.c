@@ -76,3 +76,13 @@ void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_
         }
     }
 }
+
+void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t* context, uint32_t tickNum) {
+    uint8_t i;
+
+    for(i = 0; i < 16; i++) {
+        if(context->features[i]) {
+            (context->features[i]->tickHandler)(context->features[i]->instance, tickNum);
+        }
+    }
+} 

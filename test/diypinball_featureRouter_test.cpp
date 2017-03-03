@@ -375,3 +375,44 @@ TEST(diypinball_featureRouter_test, two_features_bitmap) {
     diypinball_featureRouter_getFeatureBitmap(&instance, &featureBitmap);
     ASSERT_EQ(0b0000000000000110, featureBitmap);
 }
+
+TEST(diypinball_featureRouter_test, two_features_millisecond_tick) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+    MockHandlers myHandler1, myHandler2;
+    Handler1 = &myHandler1;
+    Handler2 = &myHandler2;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_featureDecoderInstance feature1;
+    feature1.featureNum = 1;
+    feature1.routerInstance = &instance;
+    feature1.messageHandler = messageReceivedHandler1;
+    feature1.tickHandler = millisecondTickHandler1;
+
+    diypinball_featureDecoderInstance feature2;
+    feature2.featureNum = 2;
+    feature2.routerInstance = &instance;
+    feature2.messageHandler = messageReceivedHandler2;
+    feature2.tickHandler = millisecondTickHandler2;
+
+    diypinball_result_t featureResult;
+
+    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    ASSERT_EQ(RESULT_SUCCESS, featureResult);
+
+    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    ASSERT_EQ(RESULT_SUCCESS, featureResult);
+
+    EXPECT_CALL(myHandler1, testMillisecondReceivedHandler(_, 2)).Times(1);
+    EXPECT_CALL(myHandler2, testMillisecondReceivedHandler(_, 2)).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&instance, 2);
+
+    Handler1 = NULL;
+    Handler2 = NULL;
+}
