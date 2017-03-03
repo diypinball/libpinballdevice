@@ -20,6 +20,7 @@ ExternalProject_Add(googletest
     PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
     # Disable install step
     INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
     )
 
 # Specify include dir

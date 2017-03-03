@@ -42,7 +42,7 @@ TEST(diypinball_featureRouter_test, init_zeros_structure)
     }
 
     ASSERT_EQ(instance.boardAddress, init.boardAddress);
-    ASSERT_EQ(instance.canSendHandler, testCanSendHandler);
+    ASSERT_TRUE(instance.canSendHandler == testCanSendHandler);
 }
 
 TEST(diypinball_featureRouter_test, addfeature_adds_feature) {
@@ -71,8 +71,8 @@ TEST(diypinball_featureRouter_test, addfeature_adds_feature) {
     }
 
     ASSERT_EQ((instance.features[1])->featureNum, feature.featureNum);
-    ASSERT_EQ((instance.features[1])->messageHandler, messageReceivedHandler1);
-    ASSERT_EQ((instance.features[1])->tickHandler, millisecondTickHandler1);
+    ASSERT_TRUE((instance.features[1])->messageHandler == messageReceivedHandler1);
+    ASSERT_TRUE((instance.features[1])->tickHandler == millisecondTickHandler1);
 }
 
 TEST(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
@@ -90,9 +90,7 @@ TEST(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
     feature.messageHandler = messageReceivedHandler1;
     feature.tickHandler = millisecondTickHandler1;
 
-    diypinball_result_t featureResult;
-
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature);
+    diypinball_featureRouter_addFeature(&instance, &feature);
 
     diypinball_featureRouter_deinit(&instance);
 
@@ -164,10 +162,10 @@ TEST(diypinball_featureRouter_test, addfeature_adds_2_features) {
     }
 
     ASSERT_EQ((instance.features[1])->featureNum, feature1.featureNum);
-    ASSERT_EQ((instance.features[1])->messageHandler, messageReceivedHandler1);
-    ASSERT_EQ((instance.features[1])->tickHandler, millisecondTickHandler1);
+    ASSERT_TRUE((instance.features[1])->messageHandler == messageReceivedHandler1);
+    ASSERT_TRUE((instance.features[1])->tickHandler == millisecondTickHandler1);
 
     ASSERT_EQ((instance.features[2])->featureNum, feature2.featureNum);
-    ASSERT_EQ((instance.features[2])->messageHandler, messageReceivedHandler2);
-    ASSERT_EQ((instance.features[2])->tickHandler, millisecondTickHandler2);
+    ASSERT_TRUE((instance.features[2])->messageHandler == messageReceivedHandler2);
+    ASSERT_TRUE((instance.features[2])->tickHandler == millisecondTickHandler2);
 }
