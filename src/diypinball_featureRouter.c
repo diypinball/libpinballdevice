@@ -64,3 +64,15 @@ void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* con
         (context->features[decodedMessage.featureType]->messageHandler)(context->features[decodedMessage.featureType]->instance, &decodedMessage);
     }
 }
+
+void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_t *context, uint16_t *bitmap) {
+    uint8_t i;
+
+    *bitmap = 0;
+
+    for(i=0; i<16; i++) {
+        if(context->features[i]) {
+            *bitmap |= (1 << i);
+        }
+    }
+}

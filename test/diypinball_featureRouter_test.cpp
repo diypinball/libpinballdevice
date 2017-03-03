@@ -341,3 +341,37 @@ TEST(diypinball_featureRouter_test, two_features_incoming_can_message_with_bad_f
     Handler1 = NULL;
     Handler2 = NULL;
 }
+
+TEST(diypinball_featureRouter_test, two_features_bitmap) {
+    diypinball_featureRouterInstance instance;
+    diypinball_featureRouterInit init;
+
+    init.boardAddress = 42;
+    init.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&instance, &init);
+
+    diypinball_featureDecoderInstance feature1;
+    feature1.featureNum = 1;
+    feature1.routerInstance = &instance;
+    feature1.messageHandler = messageReceivedHandler1;
+    feature1.tickHandler = millisecondTickHandler1;
+
+    diypinball_featureDecoderInstance feature2;
+    feature2.featureNum = 2;
+    feature2.routerInstance = &instance;
+    feature2.messageHandler = messageReceivedHandler2;
+    feature2.tickHandler = millisecondTickHandler2;
+
+    diypinball_result_t featureResult;
+
+    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    ASSERT_EQ(RESULT_SUCCESS, featureResult);
+
+    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    ASSERT_EQ(RESULT_SUCCESS, featureResult);
+
+    uint16_t featureBitmap;
+    diypinball_featureRouter_getFeatureBitmap(&instance, &featureBitmap);
+    ASSERT_EQ(0b0000000000000110, featureBitmap);
+}
