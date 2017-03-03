@@ -4,44 +4,44 @@
 #include <stdint.h>
 #include <string.h>
 
-void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* context, diypinball_featureRouterInit_t* init) {
+void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureRouterInit_t* init) {
     uint8_t i;
 
     for(i=0; i<16; i++) {
-        context->features[i] = NULL;
+        featureRouterInstance->features[i] = NULL;
     }
 
-    context->boardAddress = init->boardAddress;
-    context->canSendHandler = init->canSendHandler;
+    featureRouterInstance->boardAddress = init->boardAddress;
+    featureRouterInstance->canSendHandler = init->canSendHandler;
 
     return;
 }
 
-void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* context) {
+void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* featureRouterInstance) {
     uint8_t i;
 
     for(i=0; i<16; i++) {
-        context->features[i] = NULL;
+        featureRouterInstance->features[i] = NULL;
     }
 
-    context->boardAddress = 0;
-    context->canSendHandler = NULL;
+    featureRouterInstance->boardAddress = 0;
+    featureRouterInstance->canSendHandler = NULL;
 
     return;
 }
 
-diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* context, diypinball_featureDecoderInstance_t* featureDecoder) {
-    uint8_t featureNum = featureDecoder->featureNum;
+diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureDecoderInstance_t* featureDecoderInstance) {
+    uint8_t featureNum = featureDecoderInstance->featureType;
 
     if((featureNum >= 0) && (featureNum < 16)) {
-        context->features[featureNum] = featureDecoder;
+        featureRouterInstance->features[featureNum] = featureDecoderInstance;
         return RESULT_SUCCESS;
     } else {
         return RESULT_FAIL_INVALID_PARAMETER;
     }
 }
 
-void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* context, diypinball_canMessage_t* message) {
+void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_canMessage_t* message) {
     diypinball_pinballMessage_t decodedMessage;
 
     decodedMessage.priority = (message->id & 0x1E000000) >> 25;
@@ -60,40 +60,40 @@ void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* con
     decodedMessage.dataLength = message->dlc;
     memcpy(decodedMessage.data, message->data, 8);
 
-    if(context->features[decodedMessage.featureType] != NULL) {
-        (context->features[decodedMessage.featureType]->messageHandler)(context->features[decodedMessage.featureType]->instance, &decodedMessage);
+    if(featureRouterInstance->features[decodedMessage.featureType] != NULL) {
+        (featureRouterInstance->features[decodedMessage.featureType]->messageHandler)(featureRouterInstance->features[decodedMessage.featureType]->concreteFeatureDecoderInstance, &decodedMessage);
     }
 }
 
-void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_t *context, uint16_t *bitmap) {
+void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_t *featureRouterInstance, uint16_t *bitmap) {
     uint8_t i;
 
     *bitmap = 0;
 
     for(i=0; i<16; i++) {
-        if(context->features[i]) {
+        if(featureRouterInstance->features[i]) {
             *bitmap |= (1 << i);
         }
     }
 }
 
-void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t* context, uint32_t tickNum) {
+void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t* featureRouterInstance, uint32_t tickNum) {
     uint8_t i;
 
     for(i = 0; i < 16; i++) {
-        if(context->features[i]) {
-            (context->features[i]->tickHandler)(context->features[i]->instance, tickNum);
+        if(featureRouterInstance->features[i]) {
+            (featureRouterInstance->features[i]->tickHandler)(featureRouterInstance->features[i]->concreteFeatureDecoderInstance, tickNum);
         }
     }
 }
 
-void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstance_t *routerInstance, diypinball_pinballMessage_t *message) {
+void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstance_t *featureRouterInstance, diypinball_pinballMessage_t *message) {
     diypinball_canMessage_t encodedMessage;
 
     uint8_t boardAddress;
 
     if(message->messageType == MESSAGE_RESPONSE) {
-        boardAddress = routerInstance->boardAddress;
+        boardAddress = featureRouterInstance->boardAddress;
         encodedMessage.rtr = 0;
     } else if(message->messageType == MESSAGE_COMMAND) {
         boardAddress = message->boardAddress;
@@ -114,5 +114,5 @@ void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstanc
     encodedMessage.dlc = message->dataLength;
     memcpy(encodedMessage.data, message->data, 8);
 
-    return routerInstance->canSendHandler(&encodedMessage);
+    return featureRouterInstance->canSendHandler(&encodedMessage);
 }
