@@ -143,6 +143,24 @@ static void sendSerialNumber(diypinball_systemManagementInstance_t* instance, ui
     diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
 }
 
+static void sendBoardSignature(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x00;
+    response.featureNum = 0x00;
+    response.function = 0x06;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    memcpy(response.data, instance->boardSignature, 8);
+
+    response.dataLength = 8;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
 void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *instance, diypinball_systemManagementInit_t *init) {
     instance->firmwareVersionMajor = init->firmwareVersionMajor;
     instance->firmwareVersionMinor = init->firmwareVersionMinor;
@@ -197,6 +215,9 @@ void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinba
         break;
     case 0x05: // Device serial number B
         if(message->messageType == MESSAGE_REQUEST) sendSerialNumber(typedInstance, message->priority, 1);
+        break;
+    case 0x06: // Board signature
+        if(message->messageType == MESSAGE_REQUEST) sendBoardSignature(typedInstance, message->priority);
         break;
     default:
         break;
