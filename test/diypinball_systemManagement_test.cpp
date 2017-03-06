@@ -29,6 +29,14 @@ extern "C" {
 
     static void testPowerStatusHandler(uint8_t* voltages, uint8_t* currents) {
         SysManHandlersImpl->testPowerStatusHandler(voltages, currents);
+        voltages[0] = 255;
+        voltages[1] = 127;
+        voltages[2] = 63;
+        voltages[3] = 31;
+        currents[0] = 255;
+        currents[1] = 127;
+        currents[2] = 63;
+        currents[3] = 31;
     }
 }
 
@@ -131,7 +139,7 @@ TEST(diypinball_systemManagement_init_test, poweron_sends_two_messages)
     diypinball_systemManagement_sendPoweronMessages(&systemManagement);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_1_sends_id_response)
+TEST(diypinball_systemManagement_init_test, request_to_feature_0_sends_id_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -177,7 +185,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_1_sends_id_respon
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_1_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_feature_0_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -219,7 +227,7 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_1_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_2_sends_id_response)
+TEST(diypinball_systemManagement_init_test, request_to_feature_1_sends_id_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -268,7 +276,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_2_sends_id_respon
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_2_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_feature_1_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -308,4 +316,301 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_2_does_nothing)
     EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_systemManagement_init_test, request_to_feature_2_sends_id_response)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSysManHandlers mySysManHandlers;
+    SysManHandlersImpl = &mySysManHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x03 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x03 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 8;
+    expectedCANMessage.data[0] = 255;
+    expectedCANMessage.data[1] = 127;
+    expectedCANMessage.data[2] = 63;
+    expectedCANMessage.data[3] = 31;
+    expectedCANMessage.data[4] = 255;
+    expectedCANMessage.data[5] = 127;
+    expectedCANMessage.data[6] = 63;
+    expectedCANMessage.data[7] = 31;
+
+    EXPECT_CALL(mySysManHandlers, testPowerStatusHandler(_, _)).Times(1);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_systemManagement_init_test, message_to_feature_2_does_nothing)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSysManHandlers mySysManHandlers;
+    SysManHandlersImpl = &mySysManHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 1;
+    initiatingCANMessage.data[0] = 0;
+
+    EXPECT_CALL(mySysManHandlers, testPowerStatusHandler(_, _)).Times(0);
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_systemManagement_init_test, request_to_feature_3_sends_default)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 1;
+    expectedCANMessage.data[0] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_systemManagement_init_test, setting_and_retrieving_feature_3)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 1;
+    expectedCANMessage.data[0] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 1;
+    initiatingCANMessage.data[0] = 10;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    ASSERT_EQ(10, systemManagement.powerStatusPollingInterval);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 1;
+    expectedCANMessage.data[0] = 10;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_systemManagement_init_test, set_feature_3_and_millisecond_tick)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSysManHandlers mySysManHandlers;
+    SysManHandlersImpl = &mySysManHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 1;
+    initiatingCANMessage.data[0] = 10;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    ASSERT_EQ(10, systemManagement.powerStatusPollingInterval);
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    diypinball_featureRouter_millisecondTick(&router, 0);
+    diypinball_featureRouter_millisecondTick(&router, 1);
+    diypinball_featureRouter_millisecondTick(&router, 2);
+    diypinball_featureRouter_millisecondTick(&router, 3);
+    diypinball_featureRouter_millisecondTick(&router, 4);
+    diypinball_featureRouter_millisecondTick(&router, 5);
+    diypinball_featureRouter_millisecondTick(&router, 6);
+    diypinball_featureRouter_millisecondTick(&router, 7);
+    diypinball_featureRouter_millisecondTick(&router, 8);
+    diypinball_featureRouter_millisecondTick(&router, 9);
+
+    expectedCANMessage.id = (0x0E << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 8;
+    expectedCANMessage.data[0] = 255;
+    expectedCANMessage.data[1] = 127;
+    expectedCANMessage.data[2] = 63;
+    expectedCANMessage.data[3] = 31;
+    expectedCANMessage.data[4] = 255;
+    expectedCANMessage.data[5] = 127;
+    expectedCANMessage.data[6] = 63;
+    expectedCANMessage.data[7] = 31;
+
+    EXPECT_CALL(mySysManHandlers, testPowerStatusHandler(_, _)).Times(1);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&router, 10);
+
+    CANSendImpl = NULL;
+    SysManHandlersImpl = NULL;
 }

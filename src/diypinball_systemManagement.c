@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 static void sendBoardID1(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
     diypinball_pinballMessage_t response;
@@ -67,6 +68,59 @@ static void sendBoardID2(diypinball_systemManagementInstance_t* instance, uint8_
     diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
 }
 
+static void sendPowerStatus(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+    uint8_t voltages[4], currents[4];
+    diypinball_pinballMessage_t response;
+
+    (instance->powerStatusHandler)(voltages, currents);
+
+    response.priority = priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x00;
+    response.featureNum = 0x00;
+    response.function = 0x02;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.data[0] = voltages[0];
+    response.data[1] = voltages[1];
+    response.data[2] = voltages[2];
+    response.data[3] = voltages[3];
+    response.data[4] = currents[0];
+    response.data[5] = currents[1];
+    response.data[6] = currents[2];
+    response.data[7] = currents[3];
+
+    response.dataLength = 8;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+
+static void sendPowerStatusPolling(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x00;
+    response.featureNum = 0x00;
+    response.function = 0x03;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.data[0] = instance->powerStatusPollingInterval;
+
+    response.dataLength = 1;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+static void setPowerStatusPolling(diypinball_systemManagementInstance_t* instance, diypinball_pinballMessage_t *message) {
+    if(message->dataLength >= 1) {
+        instance->powerStatusPollingInterval = message->data[0];
+    }
+}
+
 void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *instance, diypinball_systemManagementInit_t *init) {
     instance->firmwareVersionMajor = init->firmwareVersionMajor;
     instance->firmwareVersionMinor = init->firmwareVersionMinor;
@@ -86,6 +140,14 @@ void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *ins
 }
 
 void diypinball_systemManagement_millisecondTickHandler(void *instance, uint32_t tickNum) {
+    diypinball_systemManagementInstance_t* typedInstance = (diypinball_systemManagementInstance_t *) instance;
+    
+    if(typedInstance->powerStatusPollingInterval) {
+        if((tickNum - typedInstance->lastTick) >= typedInstance->powerStatusPollingInterval) {
+            typedInstance->lastTick = tickNum;
+            sendPowerStatus(typedInstance, 0x0E);
+        }
+    }
 }
 
 void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
@@ -97,6 +159,16 @@ void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinba
         break;
     case 0x01: // Board ID 2 - requestable only
         if(message->messageType == MESSAGE_REQUEST) sendBoardID2(typedInstance, message->priority);
+        break;
+    case 0x02: // Power status - requestable only
+        if(message->messageType == MESSAGE_REQUEST) sendPowerStatus(typedInstance, message->priority);
+        break;
+    case 0x03: // Power Status Polling - set or request
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendPowerStatusPolling(typedInstance, message->priority);
+        } else {
+            setPowerStatusPolling(typedInstance, message);
+        }
         break;
     default:
         break;
