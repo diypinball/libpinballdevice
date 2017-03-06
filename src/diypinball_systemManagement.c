@@ -121,6 +121,28 @@ static void setPowerStatusPolling(diypinball_systemManagementInstance_t* instanc
     }
 }
 
+static void sendSerialNumber(diypinball_systemManagementInstance_t* instance, uint8_t priority, uint8_t half) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x00;
+    response.featureNum = 0x00;
+    response.function = half ? 0x05 : 0x04;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint32_t uid[2];
+    uid[0] = half ? instance->boardSerial[2] : instance->boardSerial[0];
+    uid[1] = half ? instance->boardSerial[3] : instance->boardSerial[1];
+
+    memcpy(response.data, uid, 8);
+
+    response.dataLength = 8;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
 void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *instance, diypinball_systemManagementInit_t *init) {
     instance->firmwareVersionMajor = init->firmwareVersionMajor;
     instance->firmwareVersionMinor = init->firmwareVersionMinor;
@@ -169,6 +191,12 @@ void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinba
         } else {
             setPowerStatusPolling(typedInstance, message);
         }
+        break;
+    case 0x04: // Device serial number A
+        if(message->messageType == MESSAGE_REQUEST) sendSerialNumber(typedInstance, message->priority, 0);
+        break;
+    case 0x05: // Device serial number B
+        if(message->messageType == MESSAGE_REQUEST) sendSerialNumber(typedInstance, message->priority, 1);
         break;
     default:
         break;
