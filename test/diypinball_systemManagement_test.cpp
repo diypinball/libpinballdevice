@@ -139,7 +139,7 @@ TEST(diypinball_systemManagement_init_test, poweron_sends_two_messages)
     diypinball_systemManagement_sendPoweronMessages(&systemManagement);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_0_sends_id_response)
+TEST(diypinball_systemManagement_init_test, request_to_function_0_sends_id_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -185,7 +185,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_0_sends_id_respon
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_0_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_function_0_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -227,7 +227,7 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_0_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_1_sends_id_response)
+TEST(diypinball_systemManagement_init_test, request_to_function_1_sends_id_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -276,7 +276,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_1_sends_id_respon
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_1_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_function_1_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -318,7 +318,7 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_1_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_2_sends_id_response)
+TEST(diypinball_systemManagement_init_test, request_to_function_2_sends_id_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -374,7 +374,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_2_sends_id_respon
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_2_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_function_2_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -419,7 +419,7 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_2_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_3_sends_default)
+TEST(diypinball_systemManagement_init_test, request_to_function_3_sends_default)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -465,7 +465,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_3_sends_default)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, setting_and_retrieving_feature_3)
+TEST(diypinball_systemManagement_init_test, setting_and_retrieving_function_3)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -535,7 +535,7 @@ TEST(diypinball_systemManagement_init_test, setting_and_retrieving_feature_3)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, set_feature_3_and_millisecond_tick)
+TEST(diypinball_systemManagement_init_test, set_function_3_and_millisecond_tick)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -615,7 +615,7 @@ TEST(diypinball_systemManagement_init_test, set_feature_3_and_millisecond_tick)
     SysManHandlersImpl = NULL;
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_4_sends_serial_number_A_response)
+TEST(diypinball_systemManagement_init_test, request_to_function_4_sends_serial_number_A_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -669,7 +669,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_4_sends_serial_nu
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_4_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_function_4_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -711,7 +711,7 @@ TEST(diypinball_systemManagement_init_test, message_to_feature_4_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, request_to_feature_5_sends_serial_number_B_response)
+TEST(diypinball_systemManagement_init_test, request_to_function_5_sends_serial_number_B_response)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -765,7 +765,7 @@ TEST(diypinball_systemManagement_init_test, request_to_feature_5_sends_serial_nu
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagement_init_test, message_to_feature_5_does_nothing)
+TEST(diypinball_systemManagement_init_test, message_to_function_5_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
