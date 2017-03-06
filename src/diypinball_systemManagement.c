@@ -89,6 +89,15 @@ void diypinball_systemManagement_millisecondTickHandler(void *instance, uint32_t
 }
 
 void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
+    diypinball_systemManagementInstance_t* typedInstance = (diypinball_systemManagementInstance_t *) instance;
+
+    switch(message->function) {
+    case 0x00: // Board ID 1 - requestable only
+        if(message->messageType == MESSAGE_REQUEST) sendBoardID1(typedInstance, message->priority);
+        break;
+    default:
+        break;
+    }
 }
 
 void diypinball_systemManagement_sendPoweronMessages(diypinball_systemManagementInstance_t *instance) {
