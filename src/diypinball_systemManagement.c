@@ -95,6 +95,9 @@ void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinba
     case 0x00: // Board ID 1 - requestable only
         if(message->messageType == MESSAGE_REQUEST) sendBoardID1(typedInstance, message->priority);
         break;
+    case 0x01: // Board ID 2 - requestable only
+        if(message->messageType == MESSAGE_REQUEST) sendBoardID2(typedInstance, message->priority);
+        break;
     default:
         break;
     }
