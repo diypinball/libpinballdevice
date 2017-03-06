@@ -228,3 +228,20 @@ void diypinball_systemManagement_sendPoweronMessages(diypinball_systemManagement
     sendBoardID1(instance, 0x0F);
     sendBoardID2(instance, 0x0F);
 }
+
+void diypinball_systemManagement_deinit(diypinball_systemManagementInstance_t *instance) {
+    instance->featureDecoderInstance.concreteFeatureDecoderInstance = NULL;
+    instance->featureDecoderInstance.featureType = 0;
+    instance->featureDecoderInstance.messageHandler = NULL;
+    instance->featureDecoderInstance.tickHandler = NULL;
+    instance->featureDecoderInstance.routerInstance = NULL;
+
+    instance->firmwareVersionMajor = 0;
+    instance->firmwareVersionMinor = 0;
+    instance->firmwareVersionPatch = 0;
+    instance->powerStatusPollingInterval = 0;
+    instance->lastTick = 0;
+    memset(instance->boardSerial, 0, 4 * sizeof(instance->boardSerial[0]));
+    memset(instance->boardSignature, 0, 2 * sizeof(instance->boardSignature[0]));
+    instance->powerStatusHandler = NULL;
+}

@@ -37,6 +37,7 @@ void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *ins
 void diypinball_systemManagement_millisecondTickHandler(void *instance, uint32_t tickNum);
 void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message);
 void diypinball_systemManagement_sendPoweronMessages(diypinball_systemManagementInstance_t *instance);
+void diypinball_systemManagement_deinit(diypinball_systemManagementInstance_t *instance);
 
 #ifdef __cplusplus
 }

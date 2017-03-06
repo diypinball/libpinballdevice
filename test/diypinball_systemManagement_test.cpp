@@ -990,3 +990,54 @@ TEST(diypinball_systemManagement_init_test, message_to_function_7_through_15_doe
         diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
     }
 }
+
+TEST(diypinball_systemManagement_init_test, deinit_zeros_structure)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_systemManagementInstance systemManagement;
+    diypinball_systemManagementInit systemManagementInit;
+
+    systemManagementInit.firmwareVersionMajor = 1;
+    systemManagementInit.firmwareVersionMinor = 2;
+    systemManagementInit.firmwareVersionPatch = 3;
+    systemManagementInit.boardSerial[0] = 65536;
+    systemManagementInit.boardSerial[1] = 65537;
+    systemManagementInit.boardSerial[2] = 65538;
+    systemManagementInit.boardSerial[3] = 65539;
+    systemManagementInit.boardSignature[0] = 16777216;
+    systemManagementInit.boardSignature[1] = 16777217;
+    systemManagementInit.powerStatusHandler = testPowerStatusHandler;
+    systemManagementInit.routerInstance = &router;
+
+    diypinball_systemManagement_init(&systemManagement, &systemManagementInit);
+
+    diypinball_systemManagement_deinit(&systemManagement);
+
+    ASSERT_EQ(0, systemManagement.featureDecoderInstance.featureType);
+    ASSERT_EQ(0, systemManagement.firmwareVersionMajor);
+    ASSERT_EQ(0, systemManagement.firmwareVersionMinor);
+    ASSERT_EQ(0, systemManagement.firmwareVersionPatch);
+    ASSERT_EQ(0, systemManagement.boardSerial[0]);
+    ASSERT_EQ(0, systemManagement.boardSerial[1]);
+    ASSERT_EQ(0, systemManagement.boardSerial[2]);
+    ASSERT_EQ(0, systemManagement.boardSerial[3]);
+    ASSERT_EQ(0, systemManagement.boardSignature[0]);
+    ASSERT_EQ(0, systemManagement.boardSignature[1]);
+
+    ASSERT_EQ(0, systemManagement.powerStatusPollingInterval);
+    ASSERT_EQ(0, systemManagement.lastTick);
+
+    ASSERT_EQ(NULL, systemManagement.featureDecoderInstance.routerInstance);
+    ASSERT_EQ(NULL, systemManagement.featureDecoderInstance.concreteFeatureDecoderInstance);
+    ASSERT_EQ(0, systemManagement.featureDecoderInstance.featureType);
+    ASSERT_TRUE(NULL == systemManagement.powerStatusHandler);
+    ASSERT_TRUE(NULL == systemManagement.featureDecoderInstance.tickHandler);
+    ASSERT_TRUE(NULL == systemManagement.featureDecoderInstance.messageHandler);
+}
