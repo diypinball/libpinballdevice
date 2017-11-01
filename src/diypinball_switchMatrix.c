@@ -44,3 +44,37 @@ void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tic
 void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
 	
 }
+
+void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance) {
+    instance->featureDecoderInstance.concreteFeatureDecoderInstance = NULL;
+    instance->featureDecoderInstance.featureType = 0;
+    instance->featureDecoderInstance.messageHandler = NULL;
+    instance->featureDecoderInstance.tickHandler = NULL;
+    instance->featureDecoderInstance.routerInstance = NULL;
+
+    instance->numSwitches = 0;
+    instance->readStateHandler = NULL;
+    instance->debounceChangedHandler = NULL;
+
+    uint8_t i;
+    for(i=0; i<16; i++) {
+        instance->switches[i].lastState = 0;
+        instance->switches[i].messageTriggerMask = 0;
+        instance->switches[i].pollingInterval = 0;
+        instance->switches[i].lastTick = 0;
+        instance->switches[i].debounceLimit = 0;
+        instance->switches[i].ruleMask = 0;
+        instance->switches[i].closeRule.boardAddress = 0;
+        instance->switches[i].closeRule.solenoidNum = 0;
+        instance->switches[i].closeRule.attackStatus = 0;
+        instance->switches[i].closeRule.attackDuration = 0;
+        instance->switches[i].closeRule.sustainStatus = 0;
+        instance->switches[i].closeRule.sustainDuration = 0;
+        instance->switches[i].openRule.boardAddress = 0;
+        instance->switches[i].openRule.solenoidNum = 0;
+        instance->switches[i].openRule.attackStatus = 0;
+        instance->switches[i].openRule.attackDuration = 0;
+        instance->switches[i].openRule.sustainStatus = 0;
+        instance->switches[i].openRule.sustainDuration = 0;
+    }
+}

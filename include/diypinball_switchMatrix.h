@@ -100,6 +100,15 @@ void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tic
  */
 void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message);
 
+/**
+ * \brief Deinitialize the SwitchMatrix feature
+ *
+ * \param[in] instance                  SwitchMatrix instance struct
+ *
+ * \return Nothing
+ */
+void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance);
+
 #ifdef __cplusplus
 }
 #endif
