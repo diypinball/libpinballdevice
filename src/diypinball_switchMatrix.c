@@ -111,6 +111,42 @@ static void setSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diy
     instance->switches[switchNum].messageTriggerMask = message->data[0] & 0x03;
 }
 
+static void sendSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x01;
+    response.featureNum = switchNum;
+    response.function = 0x03;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.dataLength = 1;
+    response.data[0] = instance->switches[switchNum].debounceLimit;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+static void setSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    if(message->dataLength < 1) {
+        return;
+    }
+
+    instance->switches[switchNum].debounceLimit = message->data[0];
+    (instance->debounceChangedHandler)(switchNum, message->data[0]);
+}
+
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
@@ -189,6 +225,13 @@ void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_p
             sendSwitchTriggering(typedInstance, message);
         } else {
             setSwitchTriggering(typedInstance, message);
+        }
+        break;
+    case 0x03: // Switch debouncing - set or requestable
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendSwitchDebounce(instance, message);
+        } else {
+            setSwitchDebounce(instance, message);
         }
         break;
     }
