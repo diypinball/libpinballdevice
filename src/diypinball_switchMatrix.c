@@ -41,6 +41,41 @@ static void sendSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypin
     }
 }
 
+static void sendSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x01;
+    response.featureNum = switchNum;
+    response.function = 0x01;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.dataLength = 1;
+    response.data[0] = instance->switches[switchNum].pollingInterval;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+static void setSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    if(message->dataLength < 1) {
+        return;
+    }
+
+    instance->switches[switchNum].pollingInterval = message->data[0];
+}
+
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
@@ -79,15 +114,40 @@ void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, d
 }
 
 void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tickNum) {
+    diypinball_switchMatrixInstance_t* typedInstance = (diypinball_switchMatrixInstance_t *) instance;
 
+    uint8_t i;
+    uint8_t newState;
+
+    for(i=0; i<typedInstance->numSwitches; i++) {
+        if(typedInstance->switches[i].pollingInterval) {
+            if(tickNum - typedInstance->switches[i].lastTick >= typedInstance->switches[i].pollingInterval) {
+                typedInstance->switches[i].lastTick = tickNum;
+                // send switch update
+                (typedInstance->readStateHandler)(&newState, i);
+
+                sendSwitchUpdate(typedInstance, i, newState, 0x01); // FIXME constant priority
+                if(newState != typedInstance->switches[i].lastState) {
+                    typedInstance->switches[i].lastState = newState;
+                }
+            }
+        }
+    }
 }
 
 void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
-	diypinball_switchMatrixInit_t* typedInstance = (diypinball_switchMatrixInit_t *) instance;
+	diypinball_switchMatrixInstance_t* typedInstance = (diypinball_switchMatrixInstance_t *) instance;
 
     switch(message->function) {
     case 0x00: // Switch status - requestable only
-        if(message->messageType == MESSAGE_REQUEST) sendSwitchStatus(instance, message);
+        if(message->messageType == MESSAGE_REQUEST) sendSwitchStatus(typedInstance, message);
+        break;
+    case 0x01: // Switch polling interval - set or requestable
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendSwitchPolling(typedInstance, message);
+        } else {
+            setSwitchPolling(typedInstance, message);
+        }
         break;
     }
 }
