@@ -2,6 +2,45 @@
 #include "diypinball_featureRouter.h"
 #include "diypinball_switchMatrix.h"
 
+static void sendSwitchUpdate(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t state, uint8_t priority) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x01;
+    response.featureNum = switchNum;
+    response.function = 0x00;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.dataLength = 2;
+    response.data[0] = state;
+    if(state && !(instance->switches[switchNum].lastState)) {
+        response.data[1] = 1;
+    } else if((!state) && instance->switches[switchNum].lastState) {
+        response.data[1] = 2;
+    } else {
+        response.data[1] = 0;
+    }
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+static void sendSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    uint8_t newState;
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    (instance->readStateHandler)(&newState, switchNum);
+
+    sendSwitchUpdate(instance, switchNum, newState, message->priority);
+    if(newState != instance->switches[switchNum].lastState) {
+        instance->switches[switchNum].lastState = newState;
+    }
+}
+
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
@@ -44,7 +83,13 @@ void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tic
 }
 
 void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
-	
+	diypinball_switchMatrixInit_t* typedInstance = (diypinball_switchMatrixInit_t *) instance;
+
+    switch(message->function) {
+    case 0x00: // Switch status - requestable only
+        if(message->messageType == MESSAGE_REQUEST) sendSwitchStatus(instance, message);
+        break;
+    }
 }
 
 void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance) {
