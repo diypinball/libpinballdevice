@@ -4,6 +4,8 @@
 
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
+    if(instance->numSwitches > 16) instance->numSwitches = 16;
+
     instance->readStateHandler = init->readStateHandler;
     instance->debounceChangedHandler = init->debounceChangedHandler;
 
