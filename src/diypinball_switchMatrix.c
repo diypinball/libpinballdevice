@@ -147,6 +147,45 @@ static void setSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypi
     (instance->debounceChangedHandler)(switchNum, message->data[0]);
 }
 
+static void sendAllSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    uint8_t newState;
+
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x01;
+    response.featureNum = 0;
+    response.function = 0x06;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.data[0] = 0;
+    response.data[1] = 0;
+
+    uint8_t i;
+
+    for(i=0; i < instance->numSwitches; i++) {
+        (instance->readStateHandler)(&newState, i);
+
+        if(newState != instance->switches[i].lastState) {
+            instance->switches[i].lastState = newState; // also fire rules?
+        }
+
+        if(newState) {
+            if(i < 8) {
+                response.data[0] |= (1 << i);
+            } else {
+                response.data[1] |= (1 << (i - 8));
+            }
+        }
+    }   
+
+    response.dataLength = 2;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
@@ -229,10 +268,17 @@ void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_p
         break;
     case 0x03: // Switch debouncing - set or requestable
         if(message->messageType == MESSAGE_REQUEST) {
-            sendSwitchDebounce(instance, message);
+            sendSwitchDebounce(typedInstance, message);
         } else {
-            setSwitchDebounce(instance, message);
+            setSwitchDebounce(typedInstance, message);
         }
+        break;
+    case 0x06: // Switch status - all
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendAllSwitchStatus(typedInstance, message);
+        }
+        break;
+    default:
         break;
     }
 }

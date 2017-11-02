@@ -45,6 +45,15 @@ extern "C" {
         SwitchMatrixHandlersImpl->testReadStateHandler(state, switchNum);
         *state = 0;
     }
+
+    static void testReadStateHandlerAll(uint8_t *state, uint8_t switchNum) {
+        SwitchMatrixHandlersImpl->testReadStateHandler(state, switchNum);
+        if(switchNum % 2 == 0) {
+            *state = 0;
+        } else {
+            *state = 1;
+        }
+    }
 }
 
 TEST(diypinball_switchMatrix_test, init_zeros_structure)
@@ -2005,7 +2014,7 @@ TEST(diypinball_switchMatrix_test, message_to_function_3_to_valid_switch_then_re
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchMatrix_test, request_to_function_4_through_15_does_nothing)
+TEST(diypinball_switchMatrix_test, request_to_function_7_through_15_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -2032,7 +2041,7 @@ TEST(diypinball_switchMatrix_test, request_to_function_4_through_15_does_nothing
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    for(uint8_t i = 4; i < 16; i++) {
+    for(uint8_t i = 7; i < 16; i++) {
         for(uint8_t j = 0; j < 16; j++) {
             initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (j << 8) | (i << 4) | 0;
             initiatingCANMessage.rtr = 1;
@@ -2047,7 +2056,7 @@ TEST(diypinball_switchMatrix_test, request_to_function_4_through_15_does_nothing
     }
 }
 
-TEST(diypinball_switchMatrix_test, message_to_function_4_through_15_does_nothing)
+TEST(diypinball_switchMatrix_test, message_to_function_7_through_15_does_nothing)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -2074,7 +2083,7 @@ TEST(diypinball_switchMatrix_test, message_to_function_4_through_15_does_nothing
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    for(uint8_t i = 4; i < 16; i++) {
+    for(uint8_t i = 7; i < 16; i++) {
         for(uint8_t j = 0; j < 16; j++) {
             initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (j << 8) | (i << 4) | 0;
             initiatingCANMessage.rtr = 0;
@@ -2089,4 +2098,48 @@ TEST(diypinball_switchMatrix_test, message_to_function_4_through_15_does_nothing
             diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
         }
     }
+}
+
+TEST(diypinball_switchMatrix_test, request_to_function_6_gives_all_switch_statuses)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSwitchMatrixHandlers mySwitchMatrixHandlers;
+    SwitchMatrixHandlersImpl = &mySwitchMatrixHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_switchMatrixInstance_t switchMatrix;
+    diypinball_switchMatrixInit_t switchMatrixInit;
+
+    switchMatrixInit.numSwitches = 15;
+    switchMatrixInit.debounceChangedHandler = testDebounceChangedHandler;
+    switchMatrixInit.readStateHandler = testReadStateHandlerAll;
+    switchMatrixInit.routerInstance = &router;
+
+    diypinball_switchMatrix_init(&switchMatrix, &switchMatrixInit);
+
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (6 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (6 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 0xAA; // Even switches are on, odd are off
+    expectedCANMessage.data[1] = 0x2A;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(15);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
