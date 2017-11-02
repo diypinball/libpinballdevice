@@ -40,6 +40,11 @@ extern "C" {
             *state = 0;
         }
     }
+
+    static void testReadStateHandlerZero(uint8_t *state, uint8_t switchNum) {
+        SwitchMatrixHandlersImpl->testReadStateHandler(state, switchNum);
+        *state = 0;
+    }
 }
 
 TEST(diypinball_switchMatrix_test, init_zeros_structure)
@@ -705,4 +710,293 @@ TEST(diypinball_switchMatrix_test, switch_status_polling)
     EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
 
     diypinball_featureRouter_millisecondTick(&router, 10);
+}
+
+TEST(diypinball_switchMatrix_test, switch_status_polling_edges)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSwitchMatrixHandlers mySwitchMatrixHandlers;
+    SwitchMatrixHandlersImpl = &mySwitchMatrixHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_switchMatrixInstance_t switchMatrix;
+    diypinball_switchMatrixInit_t switchMatrixInit;
+
+    switchMatrixInit.numSwitches = 15;
+    switchMatrixInit.debounceChangedHandler = testDebounceChangedHandler;
+    switchMatrixInit.readStateHandler = testReadStateHandler;
+    switchMatrixInit.routerInstance = &router;
+
+    diypinball_switchMatrix_init(&switchMatrix, &switchMatrixInit);
+
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 1;
+    initiatingCANMessage.data[0] = 10;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    diypinball_featureRouter_millisecondTick(&router, 0);
+    diypinball_featureRouter_millisecondTick(&router, 1);
+    diypinball_featureRouter_millisecondTick(&router, 2);
+    diypinball_featureRouter_millisecondTick(&router, 3);
+    diypinball_featureRouter_millisecondTick(&router, 4);
+    diypinball_featureRouter_millisecondTick(&router, 5);
+    diypinball_featureRouter_millisecondTick(&router, 6);
+    diypinball_featureRouter_millisecondTick(&router, 7);
+    diypinball_featureRouter_millisecondTick(&router, 8);
+    diypinball_featureRouter_millisecondTick(&router, 9);
+
+    expectedCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 1; // Switch 0 is hard-coded to state = 1 for this case
+    expectedCANMessage.data[1] = 1; // Previous state is a 0, so that's a rising edge -> 1 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&router, 10);
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_millisecondTick(&router, 11);
+    diypinball_featureRouter_millisecondTick(&router, 12);
+    diypinball_featureRouter_millisecondTick(&router, 13);
+    diypinball_featureRouter_millisecondTick(&router, 14);
+    diypinball_featureRouter_millisecondTick(&router, 15);
+    diypinball_featureRouter_millisecondTick(&router, 16);
+    diypinball_featureRouter_millisecondTick(&router, 17);
+    diypinball_featureRouter_millisecondTick(&router, 18);
+    diypinball_featureRouter_millisecondTick(&router, 19);
+
+    expectedCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 1; // Switch 0 is hard-coded to state = 1 for this case
+    expectedCANMessage.data[1] = 0; // Previous state is a 1, so that's a stable edge -> 0 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&router, 20);
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_millisecondTick(&router, 21);
+    diypinball_featureRouter_millisecondTick(&router, 22);
+    diypinball_featureRouter_millisecondTick(&router, 23);
+    diypinball_featureRouter_millisecondTick(&router, 24);
+    diypinball_featureRouter_millisecondTick(&router, 25);
+    diypinball_featureRouter_millisecondTick(&router, 26);
+    diypinball_featureRouter_millisecondTick(&router, 27);
+    diypinball_featureRouter_millisecondTick(&router, 28);
+    diypinball_featureRouter_millisecondTick(&router, 29);
+
+    // swap out the handler
+    switchMatrix.readStateHandler = testReadStateHandlerZero;
+
+    expectedCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 0; // Switch 0 is hard-coded to state = 0 for this case
+    expectedCANMessage.data[1] = 2; // Previous state is a 1, so that's a falling edge -> 2 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&router, 30);
+
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(0);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_millisecondTick(&router, 31);
+    diypinball_featureRouter_millisecondTick(&router, 32);
+    diypinball_featureRouter_millisecondTick(&router, 33);
+    diypinball_featureRouter_millisecondTick(&router, 34);
+    diypinball_featureRouter_millisecondTick(&router, 35);
+    diypinball_featureRouter_millisecondTick(&router, 36);
+    diypinball_featureRouter_millisecondTick(&router, 37);
+    diypinball_featureRouter_millisecondTick(&router, 38);
+    diypinball_featureRouter_millisecondTick(&router, 39);
+
+    expectedCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 0; // Switch 0 is hard-coded to state = 0 for this case
+    expectedCANMessage.data[1] = 0; // Previous state is a 0, so that's a stable edge -> 0 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+
+    diypinball_featureRouter_millisecondTick(&router, 40);
+}
+
+TEST(diypinball_switchMatrix_test, request_to_function_0_edges)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockSwitchMatrixHandlers mySwitchMatrixHandlers;
+    SwitchMatrixHandlersImpl = &mySwitchMatrixHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_switchMatrixInstance_t switchMatrix;
+    diypinball_switchMatrixInit_t switchMatrixInit;
+
+    switchMatrixInit.numSwitches = 15;
+    switchMatrixInit.debounceChangedHandler = testDebounceChangedHandler;
+    switchMatrixInit.readStateHandler = testReadStateHandler;
+    switchMatrixInit.routerInstance = &router;
+
+    diypinball_switchMatrix_init(&switchMatrix, &switchMatrixInit);
+
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 1; // Switch 0 is hard-coded to state = 1 for this case
+    expectedCANMessage.data[1] = 1; // Previous state is a 0, so that's a rising edge -> 1 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 1; // Switch 0 is hard-coded to state = 1 for this case
+    expectedCANMessage.data[1] = 0; // Previous state is a 1, so that's no edge -> 0 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    // swap out the handler
+    switchMatrix.readStateHandler = testReadStateHandlerZero;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 0; // Switch 0 is hard-coded to state = 0 for this case
+    expectedCANMessage.data[1] = 2; // Previous state is a 1, so that's a falling edge -> 2 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 2;
+    expectedCANMessage.data[0] = 0; // Switch 0 is hard-coded to state = 0 for this case
+    expectedCANMessage.data[1] = 0; // Previous state is a 1, so that's no edge -> 0 in this field
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+    expectedCANMessage.data[4] = 0;
+    expectedCANMessage.data[5] = 0;
+    expectedCANMessage.data[6] = 0;
+    expectedCANMessage.data[7] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testReadStateHandler(_, _)).Times(1);
+    EXPECT_CALL(mySwitchMatrixHandlers, testDebounceChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
 }
