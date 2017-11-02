@@ -76,6 +76,41 @@ static void setSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypin
     instance->switches[switchNum].pollingInterval = message->data[0];
 }
 
+static void sendSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x01;
+    response.featureNum = switchNum;
+    response.function = 0x02;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.dataLength = 1;
+    response.data[0] = instance->switches[switchNum].messageTriggerMask;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+}
+
+static void setSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+    uint8_t switchNum = message->featureNum;
+    if(switchNum >= instance->numSwitches) {
+        return;
+    }
+
+    if(message->dataLength < 1) {
+        return;
+    }
+
+    instance->switches[switchNum].messageTriggerMask = message->data[0] & 0x03;
+}
+
 void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
@@ -149,6 +184,13 @@ void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_p
             setSwitchPolling(typedInstance, message);
         }
         break;
+    case 0x02: // Switch triggering - set or requestable
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendSwitchTriggering(typedInstance, message);
+        } else {
+            setSwitchTriggering(typedInstance, message);
+        }
+        break;
     }
 }
 
@@ -183,5 +225,16 @@ void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance)
         instance->switches[i].openRule.attackDuration = 0;
         instance->switches[i].openRule.sustainStatus = 0;
         instance->switches[i].openRule.sustainDuration = 0;
+    }
+}
+
+void diypinball_switchMatrix_registerSwitchState(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t state) {
+    if(switchNum < instance->numSwitches) {
+        if(state && !(instance->switches[switchNum].lastState) && (instance->switches[switchNum].messageTriggerMask & 0x01)) {
+            sendSwitchUpdate(instance, switchNum, state, 0x01);
+        } else if(!state && (instance->switches[switchNum].lastState) && (instance->switches[switchNum].messageTriggerMask & 0x02)) {
+            sendSwitchUpdate(instance, switchNum, state, 0x01);
+        }
+        instance->switches[switchNum].lastState = state;
     }
 }

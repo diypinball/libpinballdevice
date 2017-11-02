@@ -109,6 +109,17 @@ void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_p
  */
 void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance);
 
+/**
+ * \brief Register a switch state update with the SwitchMatrix
+ *
+ * \param[in] instance                  SwitchMatrix instance struct
+ * \param[in] switchNum                 Which switch is being updated
+ * \param[in] state                     Current state (0 = open, 1 = closed)
+ *
+ * \return Nothing
+ */
+void diypinball_switchMatrix_registerSwitchState(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t state);
+
 #ifdef __cplusplus
 }
 #endif
