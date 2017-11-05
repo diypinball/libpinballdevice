@@ -1,10 +1,10 @@
 #include "diypinball.h"
 #include "diypinball_featureRouter.h"
-#include "diypinball_switchMatrix.h"
+#include "diypinball_switchFeatureHandler.h"
 
-static void fireRule(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t rule) {
+static void fireRule(diypinball_switchFeatureHandlerInstance_t *instance, uint8_t switchNum, uint8_t rule) {
     diypinball_pinballMessage_t command;
-    diypinball_switchMatrixRule_t activeRule;
+    diypinball_switchRule_t activeRule;
     uint8_t ruleMask;
 
     if(switchNum >= instance->numSwitches) {
@@ -33,12 +33,12 @@ static void fireRule(diypinball_switchMatrixInstance_t *instance, uint8_t switch
     command.data[2] = activeRule.sustainStatus;
     command.data[3] = activeRule.sustainDuration;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &command);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &command);
 }
 
-static void fireDeactivationRule(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t rule) {
+static void fireDeactivationRule(diypinball_switchFeatureHandlerInstance_t *instance, uint8_t switchNum, uint8_t rule) {
     diypinball_pinballMessage_t command;
-    diypinball_switchMatrixRule_t activeRule;
+    diypinball_switchRule_t activeRule;
     uint8_t ruleMask;
 
     if(switchNum > instance->numSwitches) {
@@ -64,10 +64,10 @@ static void fireDeactivationRule(diypinball_switchMatrixInstance_t *instance, ui
     command.dataLength = 1;
     command.data[0] = 0x00;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &command);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &command);
 }
 
-static void sendSwitchUpdate(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t state, uint8_t priority) {
+static void sendSwitchUpdate(diypinball_switchFeatureHandlerInstance_t *instance, uint8_t switchNum, uint8_t state, uint8_t priority) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -88,7 +88,7 @@ static void sendSwitchUpdate(diypinball_switchMatrixInstance_t *instance, uint8_
         response.data[1] = 0;
     }
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
     if(response.data[1] == 1) {
         fireRule(instance, switchNum, 1);
     } else if(response.data[1] == 2) {
@@ -96,7 +96,7 @@ static void sendSwitchUpdate(diypinball_switchMatrixInstance_t *instance, uint8_
     }
 }
 
-static void sendSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void sendSwitchStatus(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     uint8_t newState;
     uint8_t switchNum = message->featureNum;
     if(switchNum >= instance->numSwitches) {
@@ -111,7 +111,7 @@ static void sendSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypin
     }
 }
 
-static void sendSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void sendSwitchPolling(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     diypinball_pinballMessage_t response;
 
     uint8_t switchNum = message->featureNum;
@@ -130,10 +130,10 @@ static void sendSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypi
     response.dataLength = 1;
     response.data[0] = instance->switches[switchNum].pollingInterval;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void setSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void setSwitchPolling(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     uint8_t switchNum = message->featureNum;
     if(switchNum >= instance->numSwitches) {
         return;
@@ -146,7 +146,7 @@ static void setSwitchPolling(diypinball_switchMatrixInstance_t *instance, diypin
     instance->switches[switchNum].pollingInterval = message->data[0];
 }
 
-static void sendSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void sendSwitchTriggering(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     diypinball_pinballMessage_t response;
 
     uint8_t switchNum = message->featureNum;
@@ -165,10 +165,10 @@ static void sendSwitchTriggering(diypinball_switchMatrixInstance_t *instance, di
     response.dataLength = 1;
     response.data[0] = instance->switches[switchNum].messageTriggerMask;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void setSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void setSwitchTriggering(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     uint8_t switchNum = message->featureNum;
     if(switchNum >= instance->numSwitches) {
         return;
@@ -181,7 +181,7 @@ static void setSwitchTriggering(diypinball_switchMatrixInstance_t *instance, diy
     instance->switches[switchNum].messageTriggerMask = message->data[0] & 0x03;
 }
 
-static void sendSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void sendSwitchDebounce(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     diypinball_pinballMessage_t response;
 
     uint8_t switchNum = message->featureNum;
@@ -200,10 +200,10 @@ static void sendSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diyp
     response.dataLength = 1;
     response.data[0] = instance->switches[switchNum].debounceLimit;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void setSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void setSwitchDebounce(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     uint8_t switchNum = message->featureNum;
     if(switchNum >= instance->numSwitches) {
         return;
@@ -217,9 +217,9 @@ static void setSwitchDebounce(diypinball_switchMatrixInstance_t *instance, diypi
     (instance->debounceChangedHandler)(switchNum, message->data[0]);
 }
 
-static void sendSwitchRule(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message, uint8_t rule) {
+static void sendSwitchRule(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message, uint8_t rule) {
     diypinball_pinballMessage_t response;
-    diypinball_switchMatrixRule_t *activeRule;
+    diypinball_switchRule_t *activeRule;
     uint8_t ruleMask;
 
     uint8_t switchNum = message->featureNum;
@@ -247,11 +247,11 @@ static void sendSwitchRule(diypinball_switchMatrixInstance_t *instance, diypinba
     response.data[5] = activeRule->sustainStatus;
     response.data[6] = activeRule->sustainDuration;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void setSwitchRule(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message, uint8_t rule) {
-    diypinball_switchMatrixRule_t *activeRule;
+static void setSwitchRule(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message, uint8_t rule) {
+    diypinball_switchRule_t *activeRule;
     uint8_t ruleMask;
     uint8_t switchNum = message->featureNum;
 
@@ -292,7 +292,7 @@ static void setSwitchRule(diypinball_switchMatrixInstance_t *instance, diypinbal
     }
 }
 
-static void sendAllSwitchStatus(diypinball_switchMatrixInstance_t *instance, diypinball_pinballMessage_t *message) {
+static void sendAllSwitchStatus(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_pinballMessage_t *message) {
     uint8_t newState;
 
     diypinball_pinballMessage_t response;
@@ -328,10 +328,10 @@ static void sendAllSwitchStatus(diypinball_switchMatrixInstance_t *instance, diy
 
     response.dataLength = 2;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, diypinball_switchMatrixInit_t *init) {
+void diypinball_switchFeatureHandler_init(diypinball_switchFeatureHandlerInstance_t *instance, diypinball_switchFeatureHandlerInit_t *init) {
     instance->numSwitches = init->numSwitches;
     if(instance->numSwitches > 16) instance->numSwitches = 16;
 
@@ -360,16 +360,16 @@ void diypinball_switchMatrix_init(diypinball_switchMatrixInstance_t *instance, d
         instance->switches[i].openRule.sustainDuration = 0;
     }
 
-    instance->featureDecoderInstance.concreteFeatureDecoderInstance = (void*) instance;
-    instance->featureDecoderInstance.featureType = 1; // FIXME constant
-    instance->featureDecoderInstance.messageHandler = diypinball_switchMatrix_messageReceivedHandler;
-    instance->featureDecoderInstance.tickHandler = diypinball_switchMatrix_millisecondTickHandler;
-    instance->featureDecoderInstance.routerInstance = init->routerInstance;
-    diypinball_featureRouter_addFeature(init->routerInstance, &(instance->featureDecoderInstance));
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = (void*) instance;
+    instance->featureHandlerInstance.featureType = 1; // FIXME constant
+    instance->featureHandlerInstance.messageHandler = diypinball_switchFeatureHandler_messageReceivedHandler;
+    instance->featureHandlerInstance.tickHandler = diypinball_switchFeatureHandler_millisecondTickHandler;
+    instance->featureHandlerInstance.routerInstance = init->routerInstance;
+    diypinball_featureRouter_addFeature(init->routerInstance, &(instance->featureHandlerInstance));
 }
 
-void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tickNum) {
-    diypinball_switchMatrixInstance_t* typedInstance = (diypinball_switchMatrixInstance_t *) instance;
+void diypinball_switchFeatureHandler_millisecondTickHandler(void *instance, uint32_t tickNum) {
+    diypinball_switchFeatureHandlerInstance_t* typedInstance = (diypinball_switchFeatureHandlerInstance_t *) instance;
 
     uint8_t i;
     uint8_t newState;
@@ -390,8 +390,8 @@ void diypinball_switchMatrix_millisecondTickHandler(void *instance, uint32_t tic
     }
 }
 
-void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
-	diypinball_switchMatrixInstance_t* typedInstance = (diypinball_switchMatrixInstance_t *) instance;
+void diypinball_switchFeatureHandler_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
+	diypinball_switchFeatureHandlerInstance_t* typedInstance = (diypinball_switchFeatureHandlerInstance_t *) instance;
 
     switch(message->function) {
     case 0x00: // Switch status - requestable only
@@ -442,12 +442,12 @@ void diypinball_switchMatrix_messageReceivedHandler(void *instance, diypinball_p
     }
 }
 
-void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance) {
-    instance->featureDecoderInstance.concreteFeatureDecoderInstance = NULL;
-    instance->featureDecoderInstance.featureType = 0;
-    instance->featureDecoderInstance.messageHandler = NULL;
-    instance->featureDecoderInstance.tickHandler = NULL;
-    instance->featureDecoderInstance.routerInstance = NULL;
+void diypinball_switchFeatureHandler_deinit(diypinball_switchFeatureHandlerInstance_t *instance) {
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = NULL;
+    instance->featureHandlerInstance.featureType = 0;
+    instance->featureHandlerInstance.messageHandler = NULL;
+    instance->featureHandlerInstance.tickHandler = NULL;
+    instance->featureHandlerInstance.routerInstance = NULL;
 
     instance->numSwitches = 0;
     instance->readStateHandler = NULL;
@@ -476,7 +476,7 @@ void diypinball_switchMatrix_deinit(diypinball_switchMatrixInstance_t *instance)
     }
 }
 
-void diypinball_switchMatrix_registerSwitchState(diypinball_switchMatrixInstance_t *instance, uint8_t switchNum, uint8_t state) {
+void diypinball_switchFeatureHandler_registerSwitchState(diypinball_switchFeatureHandlerInstance_t *instance, uint8_t switchNum, uint8_t state) {
     if(switchNum < instance->numSwitches) {
         if(state && !(instance->switches[switchNum].lastState)) {
             if (instance->switches[switchNum].messageTriggerMask & 0x01) {

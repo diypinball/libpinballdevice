@@ -30,11 +30,11 @@ void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* feature
     return;
 }
 
-diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureDecoderInstance_t* featureDecoderInstance) {
-    uint8_t featureNum = featureDecoderInstance->featureType;
+diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureHandlerInstance_t* featureHandlerInstance) {
+    uint8_t featureNum = featureHandlerInstance->featureType;
 
     if((featureNum >= 0) && (featureNum < 16)) {
-        featureRouterInstance->features[featureNum] = featureDecoderInstance;
+        featureRouterInstance->features[featureNum] = featureHandlerInstance;
         return RESULT_SUCCESS;
     } else {
         return RESULT_FAIL_INVALID_PARAMETER;
@@ -61,7 +61,7 @@ void diypinball_featureRouter_receiveCAN(diypinball_featureRouterInstance_t* fea
     memcpy(decodedMessage.data, message->data, 8);
 
     if(featureRouterInstance->features[decodedMessage.featureType] != NULL) {
-        (featureRouterInstance->features[decodedMessage.featureType]->messageHandler)(featureRouterInstance->features[decodedMessage.featureType]->concreteFeatureDecoderInstance, &decodedMessage);
+        (featureRouterInstance->features[decodedMessage.featureType]->messageHandler)(featureRouterInstance->features[decodedMessage.featureType]->concreteFeatureHandlerInstance, &decodedMessage);
     }
 }
 
@@ -82,7 +82,7 @@ void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t
 
     for(i = 0; i < 16; i++) {
         if(featureRouterInstance->features[i]) {
-            (featureRouterInstance->features[i]->tickHandler)(featureRouterInstance->features[i]->concreteFeatureDecoderInstance, tickNum);
+            (featureRouterInstance->features[i]->tickHandler)(featureRouterInstance->features[i]->concreteFeatureHandlerInstance, tickNum);
         }
     }
 }
