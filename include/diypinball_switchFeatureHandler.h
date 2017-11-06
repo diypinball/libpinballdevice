@@ -33,10 +33,10 @@ typedef struct diypinball_switchRule {
 } diypinball_switchRule_t;
 
 /*
- * \struct diypinball_switchFeatureHandlerStatus_t diypinball_switchFeatureHandlerStatus
+ * \struct diypinball_switchStatus_t diypinball_switchStatus
  * \brief Stores information related to an individual switch in the matrix
  */
-typedef struct diypinball_switchFeatureHandlerStatus {
+typedef struct diypinball_switchStatus {
     uint8_t lastState;                                                      /**< The previous state of the switch */
     uint8_t messageTriggerMask;                                             /**< The mask to indicate which transitions should trigger an automatic response */
     uint8_t pollingInterval;                                                /**< Interval to automatically send out switch status messages */
@@ -45,7 +45,7 @@ typedef struct diypinball_switchFeatureHandlerStatus {
     uint8_t ruleMask;                                                       /**< Event mask for firing hardware rules */
     diypinball_switchRule_t closeRule;                                /**< Rule for when the switch is closed */
     diypinball_switchRule_t openRule;                                 /**< Rule for when the switch is opened */
-} diypinball_switchFeatureHandlerStatus_t;
+} diypinball_switchStatus_t;
 
 /*
  * \struct diypinball_switchFeatureHandlerInstance_t diypinball_switchFeatureHandlerInstance
@@ -53,7 +53,7 @@ typedef struct diypinball_switchFeatureHandlerStatus {
  */
 typedef struct diypinball_switchFeatureHandlerInstance {
     diypinball_featureHandlerInstance_t featureHandlerInstance;             /**< featureDecoder instance for the FeatureRouter */
-    diypinball_switchFeatureHandlerStatus_t switches[16];                           /**< Array of switch status objects */
+    diypinball_switchStatus_t switches[16];                           /**< Array of switch status objects */
     uint8_t numSwitches;                                                    /**< The number of switches to be scanned */
     diypinball_switchFeatureHandlerReadStateHandler readStateHandler;               /**< Function pointer to the read switch state handler */
     diypinball_switchFeatureHandlerDebounceChangedHandler debounceChangedHandler;   /**< Function pointer to the debounce parameter change handler */
