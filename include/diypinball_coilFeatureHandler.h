@@ -76,6 +76,15 @@ void diypinball_coilFeatureHandler_millisecondTickHandler(void *instance, uint32
  */
 void diypinball_coilFeatureHandler_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message);
 
+/**
+ * \brief Deinitialize the CoilFeatureHandler feature
+ *
+ * \param[in] instance                  CoilFeatureHandler instance struct
+ *
+ * \return Nothing
+ */
+void diypinball_coilFeatureHandler_deinit(diypinball_coilFeatureHandlerInstance_t *instance);
+
 #ifdef __cplusplus
 }
 #endif

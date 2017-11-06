@@ -76,3 +76,41 @@ TEST(diypinball_coilFeatureHandler_test, init_zeros_structure)
     ASSERT_TRUE(diypinball_coilFeatureHandler_millisecondTickHandler == coilFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_coilFeatureHandler_messageReceivedHandler == coilFeatureHandler.featureHandlerInstance.messageHandler);
 }
+
+TEST(diypinball_coilFeatureHandler_test, deinit_zeros_structure)
+{
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
+    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
+
+    coilFeatureHandlerInit.numCoils = 16;
+    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
+    coilFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
+
+    diypinball_coilFeatureHandler_deinit(&coilFeatureHandler);
+
+    ASSERT_EQ(0, coilFeatureHandler.featureHandlerInstance.featureType);
+
+    for(uint8_t i = 0; i < 16; i++) {
+        ASSERT_EQ(0, coilFeatureHandler.coils[i].attackState);
+        ASSERT_EQ(0, coilFeatureHandler.coils[i].attackDuration);
+        ASSERT_EQ(0, coilFeatureHandler.coils[i].sustainState);
+        ASSERT_EQ(0, coilFeatureHandler.coils[i].sustainDuration);
+    }
+
+    ASSERT_EQ(NULL, coilFeatureHandler.featureHandlerInstance.routerInstance);
+    ASSERT_EQ(NULL, coilFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
+    ASSERT_EQ(0, coilFeatureHandler.numCoils);
+    ASSERT_TRUE(NULL == coilFeatureHandler.coilChangedHandler);
+    ASSERT_TRUE(NULL == coilFeatureHandler.featureHandlerInstance.tickHandler);
+    ASSERT_TRUE(NULL == coilFeatureHandler.featureHandlerInstance.messageHandler);
+}

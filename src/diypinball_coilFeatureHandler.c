@@ -31,3 +31,22 @@ void diypinball_coilFeatureHandler_messageReceivedHandler(void *instance, diypin
     diypinball_coilFeatureHandlerInstance_t* typedInstance = (diypinball_coilFeatureHandlerInstance_t *) instance;
 
 }
+
+void diypinball_coilFeatureHandler_deinit(diypinball_coilFeatureHandlerInstance_t *instance) {
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = NULL;
+    instance->featureHandlerInstance.featureType = 0;
+    instance->featureHandlerInstance.messageHandler = NULL;
+    instance->featureHandlerInstance.tickHandler = NULL;
+    instance->featureHandlerInstance.routerInstance = NULL;
+
+    instance->numCoils = 0;
+    instance->coilChangedHandler = NULL;
+
+    uint8_t i;
+    for(i=0; i<16; i++) {
+        instance->coils[i].attackState = 0;
+        instance->coils[i].attackDuration = 0;
+        instance->coils[i].sustainState = 0;
+        instance->coils[i].sustainDuration = 0;
+    }
+}
