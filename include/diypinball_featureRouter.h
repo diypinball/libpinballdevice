@@ -10,17 +10,17 @@ extern "C" {
 
 typedef struct diypinball_featureRouterInstance diypinball_featureRouterInstance_t;
 typedef struct diypinball_featureRouterInit diypinball_featureRouterInit_t;
-typedef struct diypinball_featureDecoderInstance diypinball_featureDecoderInstance_t;
+typedef struct diypinball_featureHandlerInstance diypinball_featureHandlerInstance_t;
 
 /*
- * \brief Function pointer to a message received handler, implemented by a FeatureDecoder
+ * \brief Function pointer to a message received handler, implemented by a FeatureHandler
  */
-typedef void (*diypinball_messageReceivedHandler)(void *featureDecoderInstance, diypinball_pinballMessage_t *message);
+typedef void (*diypinball_messageReceivedHandler)(void *featureHandlerInstance, diypinball_pinballMessage_t *message);
 
 /*
- * \brief Function pointer to a millisecond tick handler, implemented by a FeatureDecoder
+ * \brief Function pointer to a millisecond tick handler, implemented by a FeatureHandler
  */
-typedef void (*diypinball_millisecondTickHandler)(void *featureDecoderInstance, uint32_t tickNum);
+typedef void (*diypinball_millisecondTickHandler)(void *featureHandlerInstance, uint32_t tickNum);
 
 /*
  * \struct diypinball_featureRouterInstance
@@ -28,7 +28,7 @@ typedef void (*diypinball_millisecondTickHandler)(void *featureDecoderInstance, 
  */
 struct diypinball_featureRouterInstance {
     uint8_t boardAddress;                               /**< The board address for this FeatureRouter */
-    diypinball_featureDecoderInstance_t* features[16];  /**< Array of pointers to the implemented FeatureDecoders */
+    diypinball_featureHandlerInstance_t* features[16];  /**< Array of pointers to the implemented FeatureHandlers */
     diypinball_canMessageSendHandler canSendHandler;    /**< Pointer to the function to send a CAN message */
 };
 
@@ -42,15 +42,15 @@ struct diypinball_featureRouterInit {
 };
 
 /*
- * \struct diypinball_featureDecoderInstance
- * \brief Stores information relating to the instance of a FeatureDecoder
+ * \struct diypinball_featureHandlerInstance
+ * \brief Stores information relating to the instance of a FeatureHandler
  */
-struct diypinball_featureDecoderInstance {
+struct diypinball_featureHandlerInstance {
     uint8_t featureType;                                /**< The feature type of the feature implemented */
-    void *concreteFeatureDecoderInstance;               /**< Pointer to the concrete FeatureDecoder instance */
+    void *concreteFeatureHandlerInstance;               /**< Pointer to the concrete FeatureHandler instance */
     diypinball_featureRouterInstance_t *routerInstance; /**< Pointer to the instance of the FeatureRouter. Provided by the diypinball_featureRouter_addFeature */
-    diypinball_messageReceivedHandler messageHandler;   /**< Pointer to the MessageReceivedHandler of the FeatureDecoder */
-    diypinball_millisecondTickHandler tickHandler;      /**< Pointer to the MillisecondTickHandler of the FeatureDecoder */
+    diypinball_messageReceivedHandler messageHandler;   /**< Pointer to the MessageReceivedHandler of the FeatureHandler */
+    diypinball_millisecondTickHandler tickHandler;      /**< Pointer to the MillisecondTickHandler of the FeatureHandler */
 };
 
 /**
@@ -73,17 +73,17 @@ void diypinball_featureRouter_init(diypinball_featureRouterInstance_t* featureRo
 void diypinball_featureRouter_deinit(diypinball_featureRouterInstance_t* featureRouterInstance);
 
 /**
- * \brief Add a feature's FeatureDecoder instance to the FeatureRouter
+ * \brief Add a feature's FeatureHandler instance to the FeatureRouter
  *
  * \param[in] featureRouterInstance     FeatureRouter instance struct
- * \param[in] featureDecoder            FeatureDecoder instance struct
+ * \param[in] featureHandler            FeatureHandler instance struct
  *
  * \return RESULT_SUCCESS on success, RESULT_FAIL_INVALID_PARAMETER if the featureNum is invalid
  */
-diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureDecoderInstance_t* featureDecoderInstance);
+diypinball_result_t diypinball_featureRouter_addFeature(diypinball_featureRouterInstance_t* featureRouterInstance, diypinball_featureHandlerInstance_t* featureHandlerInstance);
 
 /**
- * \brief Process a received CAN message, and route it to the proper FeatureDecoder
+ * \brief Process a received CAN message, and route it to the proper FeatureHandler
  *
  * \param[in] featureRouterInstance     FeatureRouter instance struct
  * \param[in] message                   CAN message struct
@@ -113,7 +113,7 @@ void diypinball_featureRouter_getFeatureBitmap(diypinball_featureRouterInstance_
 void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t* featureRouterInstance, uint32_t tickNum);
 
 /**
- * \brief Send a PinballMessage from a FeatureDecoder to the CAN Send handler
+ * \brief Send a PinballMessage from a FeatureHandler to the CAN Send handler
  *
  * \param[in] featureRouterInstance     FeatureRouter instance struct
  * \param[in] message                   pinballMessage struct to be sent

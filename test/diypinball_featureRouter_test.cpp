@@ -27,20 +27,20 @@ extern "C" {
         CANSendImpl->testCanSendHandler(message);
     }
 
-    static void messageReceivedHandler1(void *featureDecoderInstance, diypinball_pinballMessage_t *message) {
-        Handler1->testMessageReceivedHandler(featureDecoderInstance, message);
+    static void messageReceivedHandler1(void *featureHandlerInstance, diypinball_pinballMessage_t *message) {
+        Handler1->testMessageReceivedHandler(featureHandlerInstance, message);
     }
 
-    static void millisecondTickHandler1(void *featureDecoderInstance, uint32_t tickNum) {
-        Handler1->testMillisecondReceivedHandler(featureDecoderInstance, tickNum);
+    static void millisecondTickHandler1(void *featureHandlerInstance, uint32_t tickNum) {
+        Handler1->testMillisecondReceivedHandler(featureHandlerInstance, tickNum);
     }
 
-    static void messageReceivedHandler2(void *featureDecoderInstance, diypinball_pinballMessage_t *message) {
-        Handler2->testMessageReceivedHandler(featureDecoderInstance, message);;
+    static void messageReceivedHandler2(void *featureHandlerInstance, diypinball_pinballMessage_t *message) {
+        Handler2->testMessageReceivedHandler(featureHandlerInstance, message);;
     }
 
-    static void millisecondTickHandler2(void *featureDecoderInstance, uint32_t tickNum) {
-        Handler2->testMillisecondReceivedHandler(featureDecoderInstance, tickNum);
+    static void millisecondTickHandler2(void *featureHandlerInstance, uint32_t tickNum) {
+        Handler2->testMillisecondReceivedHandler(featureHandlerInstance, tickNum);
     }
 }
 
@@ -71,7 +71,7 @@ TEST(diypinball_featureRouter_test, addfeature_adds_feature) {
 
     diypinball_featureRouter_init(&instance, &init);
 
-    diypinball_featureDecoderInstance feature;
+    diypinball_featureHandlerInstance feature;
     feature.featureType = 1;
     feature.routerInstance = &instance;
     feature.messageHandler = messageReceivedHandler1;
@@ -101,7 +101,7 @@ TEST(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
 
     diypinball_featureRouter_init(&instance, &init);
 
-    diypinball_featureDecoderInstance feature;
+    diypinball_featureHandlerInstance feature;
     feature.featureType = 1;
     feature.routerInstance = &instance;
     feature.messageHandler = messageReceivedHandler1;
@@ -128,7 +128,7 @@ TEST(diypinball_featureRouter_test, addfeature_with_invalid_featureType_adds_not
 
     diypinball_featureRouter_init(&instance, &init);
 
-    diypinball_featureDecoderInstance feature;
+    diypinball_featureHandlerInstance feature;
     feature.featureType = 17;
     feature.routerInstance = &instance;
     feature.messageHandler = messageReceivedHandler1;
@@ -155,16 +155,16 @@ TEST(diypinball_featureRouter_test, addfeature_adds_2_features) {
 
     uint32_t dummyContext1, dummyContext2;
 
-    diypinball_featureDecoderInstance feature1;
+    diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
-    feature1.concreteFeatureDecoderInstance = (void*) &dummyContext1;
+    feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
     feature1.routerInstance = &instance;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureDecoderInstance feature2;
+    diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
-    feature2.concreteFeatureDecoderInstance = (void*) &dummyContext2;
+    feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
     feature2.routerInstance = &instance;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
@@ -185,12 +185,12 @@ TEST(diypinball_featureRouter_test, addfeature_adds_2_features) {
     ASSERT_EQ((instance.features[1])->featureType, feature1.featureType);
     ASSERT_TRUE((instance.features[1])->messageHandler == messageReceivedHandler1);
     ASSERT_TRUE((instance.features[1])->tickHandler == millisecondTickHandler1);
-    ASSERT_EQ(&dummyContext1, (instance.features[1])->concreteFeatureDecoderInstance);
+    ASSERT_EQ(&dummyContext1, (instance.features[1])->concreteFeatureHandlerInstance);
 
     ASSERT_EQ((instance.features[2])->featureType, feature2.featureType);
     ASSERT_TRUE((instance.features[2])->messageHandler == messageReceivedHandler2);
     ASSERT_TRUE((instance.features[2])->tickHandler == millisecondTickHandler2);
-    ASSERT_EQ(&dummyContext2, (instance.features[2])->concreteFeatureDecoderInstance);
+    ASSERT_EQ(&dummyContext2, (instance.features[2])->concreteFeatureHandlerInstance);
 }
 
 TEST(diypinball_featureRouter_test, two_features_incoming_can_message_routed_properly_and_decoded) {
@@ -207,16 +207,16 @@ TEST(diypinball_featureRouter_test, two_features_incoming_can_message_routed_pro
 
     uint32_t dummyContext1, dummyContext2;
 
-    diypinball_featureDecoderInstance feature1;
+    diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
-    feature1.concreteFeatureDecoderInstance = (void*) &dummyContext1;
+    feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
     feature1.routerInstance = &instance;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureDecoderInstance feature2;
+    diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
-    feature2.concreteFeatureDecoderInstance = (void*) &dummyContext2;
+    feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
     feature2.routerInstance = &instance;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
@@ -284,16 +284,16 @@ TEST(diypinball_featureRouter_test, two_features_incoming_can_message_with_bad_f
 
     uint32_t dummyContext1, dummyContext2;
 
-    diypinball_featureDecoderInstance feature1;
+    diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
-    feature1.concreteFeatureDecoderInstance = (void*) &dummyContext1;
+    feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
     feature1.routerInstance = &instance;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureDecoderInstance feature2;
+    diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
-    feature2.concreteFeatureDecoderInstance = (void*) &dummyContext2;
+    feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
     feature2.routerInstance = &instance;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
@@ -339,16 +339,16 @@ TEST(diypinball_featureRouter_test, two_features_bitmap) {
 
     uint32_t dummyContext1, dummyContext2;
 
-    diypinball_featureDecoderInstance feature1;
+    diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
-    feature1.concreteFeatureDecoderInstance = (void*) &dummyContext1;
+    feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
     feature1.routerInstance = &instance;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureDecoderInstance feature2;
+    diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
-    feature2.concreteFeatureDecoderInstance = (void*) &dummyContext2;
+    feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
     feature2.routerInstance = &instance;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
@@ -380,16 +380,16 @@ TEST(diypinball_featureRouter_test, two_features_millisecond_tick) {
 
     uint32_t dummyContext1, dummyContext2;
 
-    diypinball_featureDecoderInstance feature1;
+    diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
-    feature1.concreteFeatureDecoderInstance = (void*) &dummyContext1;
+    feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
     feature1.routerInstance = &instance;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureDecoderInstance feature2;
+    diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
-    feature2.concreteFeatureDecoderInstance = (void*) &dummyContext2;
+    feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
     feature2.routerInstance = &instance;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;

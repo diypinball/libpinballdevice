@@ -1,12 +1,12 @@
 #include "diypinball.h"
 #include "diypinball_featureRouter.h"
-#include "diypinball_systemManagement.h"
+#include "diypinball_systemManagementFeatureHandler.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 
-static void sendBoardID1(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+static void sendBoardID1(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -27,7 +27,7 @@ static void sendBoardID1(diypinball_systemManagementInstance_t* instance, uint8_
 
     uint16_t bitmap = 0;
 
-    diypinball_featureRouter_getFeatureBitmap(instance->featureDecoderInstance.routerInstance, &bitmap);
+    diypinball_featureRouter_getFeatureBitmap(instance->featureHandlerInstance.routerInstance, &bitmap);
 
     uint8_t lastNibble = 0;
     uint8_t i;
@@ -45,10 +45,10 @@ static void sendBoardID1(diypinball_systemManagementInstance_t* instance, uint8_
 
     response.dataLength = (lastNibble + 1) / 2;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void sendBoardID2(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+static void sendBoardID2(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -65,10 +65,10 @@ static void sendBoardID2(diypinball_systemManagementInstance_t* instance, uint8_
 
     response.dataLength = 3;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void sendPowerStatus(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+static void sendPowerStatus(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority) {
     uint8_t voltages[4], currents[4];
     diypinball_pinballMessage_t response;
 
@@ -93,11 +93,11 @@ static void sendPowerStatus(diypinball_systemManagementInstance_t* instance, uin
 
     response.dataLength = 8;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
 
-static void sendPowerStatusPolling(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+static void sendPowerStatusPolling(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -112,16 +112,16 @@ static void sendPowerStatusPolling(diypinball_systemManagementInstance_t* instan
 
     response.dataLength = 1;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void setPowerStatusPolling(diypinball_systemManagementInstance_t* instance, diypinball_pinballMessage_t *message) {
+static void setPowerStatusPolling(diypinball_systemManagementFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
     if(message->dataLength >= 1) {
         instance->powerStatusPollingInterval = message->data[0];
     }
 }
 
-static void sendSerialNumber(diypinball_systemManagementInstance_t* instance, uint8_t priority, uint8_t half) {
+static void sendSerialNumber(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority, uint8_t half) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -140,10 +140,10 @@ static void sendSerialNumber(diypinball_systemManagementInstance_t* instance, ui
 
     response.dataLength = 8;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-static void sendBoardSignature(diypinball_systemManagementInstance_t* instance, uint8_t priority) {
+static void sendBoardSignature(diypinball_systemManagementFeatureHandlerInstance_t* instance, uint8_t priority) {
     diypinball_pinballMessage_t response;
 
     response.priority = priority;
@@ -158,10 +158,10 @@ static void sendBoardSignature(diypinball_systemManagementInstance_t* instance, 
 
     response.dataLength = 8;
 
-    diypinball_featureRouter_sendPinballMessage(instance->featureDecoderInstance.routerInstance, &response);
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
-void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *instance, diypinball_systemManagementInit_t *init) {
+void diypinball_systemManagementFeatureHandler_init(diypinball_systemManagementFeatureHandlerInstance_t *instance, diypinball_systemManagementFeatureHandlerInit_t *init) {
     instance->firmwareVersionMajor = init->firmwareVersionMajor;
     instance->firmwareVersionMinor = init->firmwareVersionMinor;
     instance->firmwareVersionPatch = init->firmwareVersionPatch;
@@ -171,16 +171,16 @@ void diypinball_systemManagement_init(diypinball_systemManagementInstance_t *ins
     memcpy(instance->boardSignature, init->boardSignature, 2 * sizeof(instance->boardSignature[0]));
     instance->powerStatusHandler = init->powerStatusHandler;
 
-    instance->featureDecoderInstance.concreteFeatureDecoderInstance = (void*) instance;
-    instance->featureDecoderInstance.featureType = 0;
-    instance->featureDecoderInstance.messageHandler = diypinball_systemManagement_messageReceivedHandler;
-    instance->featureDecoderInstance.tickHandler = diypinball_systemManagement_millisecondTickHandler;
-    instance->featureDecoderInstance.routerInstance = init->routerInstance;
-    diypinball_featureRouter_addFeature(init->routerInstance, &(instance->featureDecoderInstance));
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = (void*) instance;
+    instance->featureHandlerInstance.featureType = 0;
+    instance->featureHandlerInstance.messageHandler = diypinball_systemManagementFeatureHandler_messageReceivedHandler;
+    instance->featureHandlerInstance.tickHandler = diypinball_systemManagementFeatureHandler_millisecondTickHandler;
+    instance->featureHandlerInstance.routerInstance = init->routerInstance;
+    diypinball_featureRouter_addFeature(init->routerInstance, &(instance->featureHandlerInstance));
 }
 
-void diypinball_systemManagement_millisecondTickHandler(void *instance, uint32_t tickNum) {
-    diypinball_systemManagementInstance_t* typedInstance = (diypinball_systemManagementInstance_t *) instance;
+void diypinball_systemManagementFeatureHandler_millisecondTickHandler(void *instance, uint32_t tickNum) {
+    diypinball_systemManagementFeatureHandlerInstance_t* typedInstance = (diypinball_systemManagementFeatureHandlerInstance_t *) instance;
     
     if(typedInstance->powerStatusPollingInterval) {
         if((tickNum - typedInstance->lastTick) >= typedInstance->powerStatusPollingInterval) {
@@ -190,8 +190,8 @@ void diypinball_systemManagement_millisecondTickHandler(void *instance, uint32_t
     }
 }
 
-void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
-    diypinball_systemManagementInstance_t* typedInstance = (diypinball_systemManagementInstance_t *) instance;
+void diypinball_systemManagementFeatureHandler_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
+    diypinball_systemManagementFeatureHandlerInstance_t* typedInstance = (diypinball_systemManagementFeatureHandlerInstance_t *) instance;
 
     switch(message->function) {
     case 0x00: // Board ID 1 - requestable only
@@ -224,17 +224,17 @@ void diypinball_systemManagement_messageReceivedHandler(void *instance, diypinba
     }
 }
 
-void diypinball_systemManagement_sendPoweronMessages(diypinball_systemManagementInstance_t *instance) {
+void diypinball_systemManagementFeatureHandler_sendPoweronMessages(diypinball_systemManagementFeatureHandlerInstance_t *instance) {
     sendBoardID1(instance, 0x0F);
     sendBoardID2(instance, 0x0F);
 }
 
-void diypinball_systemManagement_deinit(diypinball_systemManagementInstance_t *instance) {
-    instance->featureDecoderInstance.concreteFeatureDecoderInstance = NULL;
-    instance->featureDecoderInstance.featureType = 0;
-    instance->featureDecoderInstance.messageHandler = NULL;
-    instance->featureDecoderInstance.tickHandler = NULL;
-    instance->featureDecoderInstance.routerInstance = NULL;
+void diypinball_systemManagementFeatureHandler_deinit(diypinball_systemManagementFeatureHandlerInstance_t *instance) {
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = NULL;
+    instance->featureHandlerInstance.featureType = 0;
+    instance->featureHandlerInstance.messageHandler = NULL;
+    instance->featureHandlerInstance.tickHandler = NULL;
+    instance->featureHandlerInstance.routerInstance = NULL;
 
     instance->firmwareVersionMajor = 0;
     instance->firmwareVersionMinor = 0;
