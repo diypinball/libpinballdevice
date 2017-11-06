@@ -85,6 +85,17 @@ void diypinball_coilFeatureHandler_messageReceivedHandler(void *instance, diypin
  */
 void diypinball_coilFeatureHandler_deinit(diypinball_coilFeatureHandlerInstance_t *instance);
 
+/**
+ * \brief Register a coil state update with the CoilFeatureHandler
+ *
+ * \param[in] instance                  CoilFeatureHandler instance struct
+ * \param[in] switchNum                 Which coil is being updated
+ * \param[in] state                     Current state struct
+ *
+ * \return Nothing
+ */
+void diypinball_coilFeatureHandler_registerCoilState(diypinball_coilFeatureHandlerInstance_t *instance, uint8_t coilNum, diypinball_coilStatus_t state);
+
 #ifdef __cplusplus
 }
 #endif

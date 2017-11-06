@@ -111,3 +111,12 @@ void diypinball_coilFeatureHandler_deinit(diypinball_coilFeatureHandlerInstance_
         instance->coils[i].sustainDuration = 0;
     }
 }
+
+void diypinball_coilFeatureHandler_registerCoilState(diypinball_coilFeatureHandlerInstance_t *instance, uint8_t coilNum, diypinball_coilStatus_t state) {
+    if(coilNum < instance->numCoils) {
+        instance->coils[coilNum].attackState = state.attackState;
+        instance->coils[coilNum].attackDuration = state.attackDuration;
+        instance->coils[coilNum].sustainState = state.sustainState;
+        instance->coils[coilNum].sustainDuration = state.sustainDuration;
+    }
+}

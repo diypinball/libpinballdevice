@@ -495,3 +495,74 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
+
+TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_then_update_then_retrieve)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
+    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
+    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
+
+    coilFeatureHandlerInit.numCoils = 15;
+    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
+    coilFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 4;
+    initiatingCANMessage.data[0] = 255;
+    initiatingCANMessage.data[1] = 50;
+    initiatingCANMessage.data[2] = 127;
+    initiatingCANMessage.data[3] = 0;
+
+    diypinball_coilStatus_t expectedCoil;
+    expectedCoil.attackState = 255;
+    expectedCoil.attackDuration = 50;
+    expectedCoil.sustainState = 127;
+    expectedCoil.sustainDuration = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myCoilFeatureHandlerHandlers, testCoilChangedHandler(0, CoilStatusEqual(expectedCoil))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+
+    diypinball_coilStatus_t coilUpdate;
+    coilUpdate.attackState = 127;
+    coilUpdate.attackDuration = 0;
+    coilUpdate.sustainState = 0;
+    coilUpdate.sustainDuration = 0;
+
+    diypinball_coilFeatureHandler_registerCoilState(&coilFeatureHandler, 0, coilUpdate);
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.rtr = 1;
+    initiatingCANMessage.dlc = 0;
+
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.rtr = 0;
+    expectedCANMessage.dlc = 4;
+    expectedCANMessage.data[0] = 127;
+    expectedCANMessage.data[1] = 0;
+    expectedCANMessage.data[2] = 0;
+    expectedCANMessage.data[3] = 0;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+    EXPECT_CALL(myCoilFeatureHandlerHandlers, testCoilChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
