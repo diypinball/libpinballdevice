@@ -6,6 +6,26 @@
 #include <string.h>
 #include <stdio.h>
 
+static void sendApplicationInfo(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = 0x00;
+    response.function = 0x00;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.data[0] = instance->applicationVersionMajor;
+    response.data[1] = instance->applicationVersionMinor;
+    response.data[2] = instance->applicationVersionPatch;
+
+    response.dataLength = 3;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
 void diypinball_bootloaderFeatureHandler_init(diypinball_bootloaderFeatureHandlerInstance_t *instance, diypinball_bootloaderFeatureHandlerInit_t *init) {
     instance->applicationVersionMajor = init->applicationVersionMajor;
     instance->applicationVersionMinor = init->applicationVersionMinor;
@@ -35,7 +55,13 @@ void diypinball_bootloaderFeatureHandler_millisecondTickHandler(void *instance, 
 }
 
 void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
+    diypinball_bootloaderFeatureHandlerInstance_t* typedInstance = (diypinball_bootloaderFeatureHandlerInstance_t *) instance;
 
+    switch(message->function) {
+    case 0x00: // Bootloader info - requestable only
+        if(message->messageType == MESSAGE_REQUEST) sendApplicationInfo(typedInstance, message);
+        break;
+    }
 }
 
 void diypinball_bootloaderFeatureHandler_deinit(diypinball_bootloaderFeatureHandlerInstance_t *instance) {
