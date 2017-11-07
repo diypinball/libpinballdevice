@@ -26,6 +26,24 @@ static void sendApplicationInfo(diypinball_bootloaderFeatureHandlerInstance_t* i
     diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
+static void sendFlashPageSize(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = 0x01;
+    response.function = 0x00;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    memcpy(response.data, &(instance->flashPageSize), 4);
+
+    response.dataLength = 4;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
 void diypinball_bootloaderFeatureHandler_init(diypinball_bootloaderFeatureHandlerInstance_t *instance, diypinball_bootloaderFeatureHandlerInit_t *init) {
     instance->applicationVersionMajor = init->applicationVersionMajor;
     instance->applicationVersionMinor = init->applicationVersionMinor;
@@ -59,7 +77,18 @@ void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, 
 
     switch(message->function) {
     case 0x00: // Bootloader info - requestable only
-        if(message->messageType == MESSAGE_REQUEST) sendApplicationInfo(typedInstance, message);
+        switch(message->featureNum) {
+        case 0x00:
+            if(message->messageType == MESSAGE_REQUEST) sendApplicationInfo(typedInstance, message);
+            break;
+        case 0x01:
+            if(message->messageType == MESSAGE_REQUEST) sendFlashPageSize(typedInstance, message);
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
         break;
     }
 }
