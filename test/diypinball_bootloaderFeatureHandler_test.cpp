@@ -62,7 +62,7 @@ extern "C" {
     }
 }
 
-TEST(diypinball_bootloaderFeatureHandler_test, init_zeros_structure)
+TEST(diypinball_bootloaderFeatureHandler_test, init_sets_up_structure)
 {
     diypinball_featureRouterInstance router;
     diypinball_featureRouterInit routerInit;
@@ -112,4 +112,58 @@ TEST(diypinball_bootloaderFeatureHandler_test, init_zeros_structure)
     ASSERT_TRUE(testBufferWriteHandler == bootloaderFeatureHandler.bufferWriteHandler);
     ASSERT_TRUE(diypinball_bootloaderFeatureHandler_millisecondTickHandler == bootloaderFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_bootloaderFeatureHandler_messageReceivedHandler == bootloaderFeatureHandler.featureHandlerInstance.messageHandler);
+}
+
+TEST(diypinball_bootloaderFeatureHandler_test, deinit_zeros_structure)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_bootloaderFeatureHandlerInstance bootloaderFeatureHandler;
+    diypinball_bootloaderFeatureHandlerInit bootloaderFeatureHandlerInit;
+
+    bootloaderFeatureHandlerInit.applicationVersionMajor = 1;
+    bootloaderFeatureHandlerInit.applicationVersionMinor = 2;
+    bootloaderFeatureHandlerInit.applicationVersionPatch = 3;
+    bootloaderFeatureHandlerInit.flashPageSize = 2048;
+    bootloaderFeatureHandlerInit.flashBufferSize = 1024;
+    bootloaderFeatureHandlerInit.applicationBaseAddress = 0x02002000;
+    bootloaderFeatureHandlerInit.flashSize = 131072;
+    bootloaderFeatureHandlerInit.rebootHandler = testRebootHandler;
+    bootloaderFeatureHandlerInit.flashReadHandler = testFlashReadHandler;
+    bootloaderFeatureHandlerInit.flashWriteHandler = testFlashWriteHandler;
+    bootloaderFeatureHandlerInit.flashVerifyHandler = testFlashVerifyHandler;
+    bootloaderFeatureHandlerInit.bufferHashHandler = testBufferHashHandler;
+    bootloaderFeatureHandlerInit.bufferReadHandler = testBufferReadHandler;
+    bootloaderFeatureHandlerInit.bufferWriteHandler = testBufferWriteHandler;
+    bootloaderFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_bootloaderFeatureHandler_init(&bootloaderFeatureHandler, &bootloaderFeatureHandlerInit);
+    diypinball_bootloaderFeatureHandler_deinit(&bootloaderFeatureHandler);
+
+    ASSERT_EQ(0, bootloaderFeatureHandler.featureHandlerInstance.featureType);
+    ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionMajor);
+    ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionMinor);
+    ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionPatch);
+    ASSERT_EQ(0, bootloaderFeatureHandler.flashPageSize);
+    ASSERT_EQ(0, bootloaderFeatureHandler.flashBufferSize);
+    ASSERT_EQ(0, bootloaderFeatureHandler.applicationBaseAddress);
+    ASSERT_EQ(0, bootloaderFeatureHandler.flashSize);
+
+    ASSERT_EQ(NULL, bootloaderFeatureHandler.featureHandlerInstance.routerInstance);
+    ASSERT_EQ(NULL, bootloaderFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.rebootHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.flashReadHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.flashWriteHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.flashVerifyHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.bufferHashHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.bufferReadHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.bufferWriteHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.featureHandlerInstance.tickHandler);
+    ASSERT_TRUE(NULL == bootloaderFeatureHandler.featureHandlerInstance.messageHandler);
 }

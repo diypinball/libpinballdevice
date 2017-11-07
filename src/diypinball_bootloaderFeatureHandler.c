@@ -37,3 +37,26 @@ void diypinball_bootloaderFeatureHandler_millisecondTickHandler(void *instance, 
 void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, diypinball_pinballMessage_t *message) {
 
 }
+
+void diypinball_bootloaderFeatureHandler_deinit(diypinball_bootloaderFeatureHandlerInstance_t *instance) {
+    instance->featureHandlerInstance.concreteFeatureHandlerInstance = NULL;
+    instance->featureHandlerInstance.featureType = 0;
+    instance->featureHandlerInstance.messageHandler = NULL;
+    instance->featureHandlerInstance.tickHandler = NULL;
+    instance->featureHandlerInstance.routerInstance = NULL;
+
+    instance->applicationVersionMajor = 0;
+    instance->applicationVersionMinor = 0;
+    instance->applicationVersionPatch = 0;
+    instance->flashPageSize = 0;
+    instance->flashBufferSize = 0;
+    instance->applicationBaseAddress = 0;
+    instance->flashSize = 0;
+    instance->rebootHandler = NULL;
+    instance->flashReadHandler = NULL;
+    instance->flashWriteHandler = NULL;
+    instance->flashVerifyHandler = NULL;
+    instance->bufferHashHandler = NULL;
+    instance->bufferReadHandler = NULL;
+    instance->bufferWriteHandler = NULL;
+}
