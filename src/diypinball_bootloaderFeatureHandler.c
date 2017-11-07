@@ -63,6 +63,14 @@ static void sendFlashData(diypinball_bootloaderFeatureHandlerInstance_t* instanc
     diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
+static void doApplicationReboot(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    if(message->dataLength >= 1) {
+        if(message->data[0] == 0x42) {
+            (instance->rebootHandler)();
+        }
+    }
+}
+
 void diypinball_bootloaderFeatureHandler_init(diypinball_bootloaderFeatureHandlerInstance_t *instance, diypinball_bootloaderFeatureHandlerInit_t *init) {
     instance->applicationVersionMajor = init->applicationVersionMajor;
     instance->applicationVersionMinor = init->applicationVersionMinor;
@@ -109,6 +117,12 @@ void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, 
         default:
             break;
         }
+        break;
+    case 0x02:
+
+        break;
+    case 0x04:
+        if(message->messageType == MESSAGE_COMMAND) doApplicationReboot(typedInstance, message);
         break;
     default:
         break;
