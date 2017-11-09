@@ -63,6 +63,106 @@ static void sendFlashData(diypinball_bootloaderFeatureHandlerInstance_t* instanc
     diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
+static void runReadFlashToBuffer(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = message->featureNum;
+    response.function = 0x04;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint8_t result;
+    uint32_t param;
+
+    memcpy(&param, response.data, 4);
+
+    result = (instance->flashReadHandler)(param);
+
+    response.data[0] = result;
+
+    response.dataLength = 1;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
+static void runWriteBufferToFlash(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = message->featureNum;
+    response.function = 0x04;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint8_t result;
+    uint32_t param;
+
+    memcpy(&param, response.data, 4);
+
+    result = (instance->flashWriteHandler)(param);
+
+    response.data[0] = result;
+
+    response.dataLength = 1;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
+static void runVerifyBufferAgainstFlash(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = message->featureNum;
+    response.function = 0x04;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint8_t result;
+    uint32_t param;
+
+    memcpy(&param, response.data, 4);
+
+    result = (instance->flashVerifyHandler)(param);
+
+    response.data[0] = result;
+
+    response.dataLength = 1;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
+static void runCheckBufferCRC(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = message->featureNum;
+    response.function = 0x04;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint8_t result;
+    uint32_t param;
+
+    memcpy(&param, response.data, 4);
+
+    result = (instance->bufferHashHandler)(param);
+
+    response.data[0] = result;
+
+    response.dataLength = 1;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
 static void doApplicationReboot(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
     if(message->dataLength >= 1) {
         if(message->data[0] == 0x42) {
@@ -119,7 +219,22 @@ void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, 
         }
         break;
     case 0x02:
-
+        switch(message->featureNum) {
+        case 0x00:
+            if(message->messageType == MESSAGE_COMMAND) runReadFlashToBuffer(typedInstance, message);
+            break;
+        case 0x01:
+            if(message->messageType == MESSAGE_COMMAND) runWriteBufferToFlash(typedInstance, message);
+            break;
+        case 0x02:
+            if(message->messageType == MESSAGE_COMMAND) runVerifyBufferAgainstFlash(typedInstance, message);
+            break;
+        case 0x03:
+            if(message->messageType == MESSAGE_COMMAND) runCheckBufferCRC(typedInstance, message);
+            break;
+        default:
+            break;
+        }
         break;
     case 0x04:
         if(message->messageType == MESSAGE_COMMAND) doApplicationReboot(typedInstance, message);

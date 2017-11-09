@@ -975,3 +975,4 @@ TEST(diypinball_bootloaderFeatureHandler_test, reboot_message_with_right_data_re
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
+
