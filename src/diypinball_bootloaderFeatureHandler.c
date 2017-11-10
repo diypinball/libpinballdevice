@@ -70,16 +70,20 @@ static void runReadFlashToBuffer(diypinball_bootloaderFeatureHandlerInstance_t* 
     response.unitSpecific = 0x01;
     response.featureType = 0x07;
     response.featureNum = message->featureNum;
-    response.function = 0x04;
+    response.function = 0x02;
     response.reserved = 0x00;
     response.messageType = MESSAGE_RESPONSE;
 
     uint8_t result;
     uint32_t param;
 
-    memcpy(&param, response.data, 4);
+    if(message->dataLength < 4) {
+        result = 255;
+    } else {
+        memcpy(&param, message->data, 4);
 
-    result = (instance->flashReadHandler)(param);
+        result = (instance->flashReadHandler)(param);
+    }
 
     response.data[0] = result;
 
@@ -95,16 +99,20 @@ static void runWriteBufferToFlash(diypinball_bootloaderFeatureHandlerInstance_t*
     response.unitSpecific = 0x01;
     response.featureType = 0x07;
     response.featureNum = message->featureNum;
-    response.function = 0x04;
+    response.function = 0x02;
     response.reserved = 0x00;
     response.messageType = MESSAGE_RESPONSE;
 
     uint8_t result;
     uint32_t param;
 
-    memcpy(&param, response.data, 4);
+    if(message->dataLength < 4) {
+        result = 255;
+    } else {
+        memcpy(&param, message->data, 4);
 
-    result = (instance->flashWriteHandler)(param);
+        result = (instance->flashWriteHandler)(param);
+    }
 
     response.data[0] = result;
 
@@ -120,16 +128,20 @@ static void runVerifyBufferAgainstFlash(diypinball_bootloaderFeatureHandlerInsta
     response.unitSpecific = 0x01;
     response.featureType = 0x07;
     response.featureNum = message->featureNum;
-    response.function = 0x04;
+    response.function = 0x02;
     response.reserved = 0x00;
     response.messageType = MESSAGE_RESPONSE;
 
     uint8_t result;
     uint32_t param;
 
-    memcpy(&param, response.data, 4);
+    if(message->dataLength < 4) {
+        result = 255;
+    } else {
+        memcpy(&param, message->data, 4);
 
-    result = (instance->flashVerifyHandler)(param);
+        result = (instance->flashVerifyHandler)(param);
+    }
 
     response.data[0] = result;
 
@@ -145,17 +157,21 @@ static void runCheckBufferCRC(diypinball_bootloaderFeatureHandlerInstance_t* ins
     response.unitSpecific = 0x01;
     response.featureType = 0x07;
     response.featureNum = message->featureNum;
-    response.function = 0x04;
+    response.function = 0x02;
     response.reserved = 0x00;
     response.messageType = MESSAGE_RESPONSE;
 
     uint8_t result;
     uint32_t param;
 
-    memcpy(&param, response.data, 4);
+    if(message->dataLength < 4) {
+        result = 255;
+    } else {
+        memcpy(&param, message->data, 4);
 
-    result = (instance->bufferHashHandler)(param);
-
+        result = (instance->bufferHashHandler)(param);
+    }
+    
     response.data[0] = result;
 
     response.dataLength = 1;
