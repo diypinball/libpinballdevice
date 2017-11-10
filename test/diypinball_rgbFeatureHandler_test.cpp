@@ -450,7 +450,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-/*TEST(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
+TEST(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;
@@ -488,7 +488,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     }
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_rgbs)
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_reds_on_rgbs)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;
@@ -527,62 +527,30 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes
     initiatingCANMessage.data[7] = 1;
 
     diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
-    expectedRGB0.state1 = 16;
-    expectedRGB0.state1Duration = 0;
-    expectedRGB0.state2 = 0;
-    expectedRGB0.state2Duration = 0;
-    expectedRGB0.state3 = 0;
-    expectedRGB0.state3Duration = 0;
-    expectedRGB0.numStates = 1;
-    expectedRGB1.state1 = 32;
-    expectedRGB1.state1Duration = 0;
-    expectedRGB1.state2 = 0;
-    expectedRGB1.state2Duration = 0;
-    expectedRGB1.state3 = 0;
-    expectedRGB1.state3Duration = 0;
-    expectedRGB1.numStates = 1;
-    expectedRGB2.state1 = 64;
-    expectedRGB2.state1Duration = 0;
-    expectedRGB2.state2 = 0;
-    expectedRGB2.state2Duration = 0;
-    expectedRGB2.state3 = 0;
-    expectedRGB2.state3Duration = 0;
-    expectedRGB2.numStates = 1;
-    expectedRGB3.state1 = 128;
-    expectedRGB3.state1Duration = 0;
-    expectedRGB3.state2 = 0;
-    expectedRGB3.state2Duration = 0;
-    expectedRGB3.state3 = 0;
-    expectedRGB3.state3Duration = 0;
-    expectedRGB3.numStates = 1;
-    expectedRGB4.state1 = 8;
-    expectedRGB4.state1Duration = 0;
-    expectedRGB4.state2 = 0;
-    expectedRGB4.state2Duration = 0;
-    expectedRGB4.state3 = 0;
-    expectedRGB4.state3Duration = 0;
-    expectedRGB4.numStates = 1;
-    expectedRGB5.state1 = 4;
-    expectedRGB5.state1Duration = 0;
-    expectedRGB5.state2 = 0;
-    expectedRGB5.state2Duration = 0;
-    expectedRGB5.state3 = 0;
-    expectedRGB5.state3Duration = 0;
-    expectedRGB5.numStates = 1;
-    expectedRGB6.state1 = 2;
-    expectedRGB6.state1Duration = 0;
-    expectedRGB6.state2 = 0;
-    expectedRGB6.state2Duration = 0;
-    expectedRGB6.state3 = 0;
-    expectedRGB6.state3Duration = 0;
-    expectedRGB6.numStates = 1;
-    expectedRGB7.state1 = 1;
-    expectedRGB7.state1Duration = 0;
-    expectedRGB7.state2 = 0;
-    expectedRGB7.state2Duration = 0;
-    expectedRGB7.state3 = 0;
-    expectedRGB7.state3Duration = 0;
-    expectedRGB7.numStates = 1;
+    expectedRGB0.red = 16;
+    expectedRGB0.green = 0;
+    expectedRGB0.blue = 0;
+    expectedRGB1.red = 32;
+    expectedRGB1.green = 0;
+    expectedRGB1.blue = 0;
+    expectedRGB2.red = 64;
+    expectedRGB2.green = 0;
+    expectedRGB2.blue = 0;
+    expectedRGB3.red = 128;
+    expectedRGB3.green = 0;
+    expectedRGB3.blue = 0;
+    expectedRGB4.red = 8;
+    expectedRGB4.green = 0;
+    expectedRGB4.blue = 0;
+    expectedRGB5.red = 4;
+    expectedRGB5.green = 0;
+    expectedRGB5.blue = 0;
+    expectedRGB6.red = 2;
+    expectedRGB6.green = 0;
+    expectedRGB6.blue = 0;
+    expectedRGB7.red = 1;
+    expectedRGB7.green = 0;
+    expectedRGB7.blue = 0;
 
     InSequence dummy;
     EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
@@ -598,7 +566,163 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_rgbs)
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_greens_on_rgbs)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
+    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+    rgbFeatureHandlerInit.numRGBs = 16;
+    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+    rgbFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (2 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 8;
+    initiatingCANMessage.data[0] = 16;
+    initiatingCANMessage.data[1] = 32;
+    initiatingCANMessage.data[2] = 64;
+    initiatingCANMessage.data[3] = 128;
+    initiatingCANMessage.data[4] = 8;
+    initiatingCANMessage.data[5] = 4;
+    initiatingCANMessage.data[6] = 2;
+    initiatingCANMessage.data[7] = 1;
+
+    diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
+    expectedRGB0.red = 0;
+    expectedRGB0.green = 16;
+    expectedRGB0.blue = 0;
+    expectedRGB1.red = 0;
+    expectedRGB1.green = 32;
+    expectedRGB1.blue = 0;
+    expectedRGB2.red = 0;
+    expectedRGB2.green = 64;
+    expectedRGB2.blue = 0;
+    expectedRGB3.red = 0;
+    expectedRGB3.green = 128;
+    expectedRGB3.blue = 0;
+    expectedRGB4.red = 0;
+    expectedRGB4.green = 8;
+    expectedRGB4.blue = 0;
+    expectedRGB5.red = 0;
+    expectedRGB5.green = 4;
+    expectedRGB5.blue = 0;
+    expectedRGB6.red = 0;
+    expectedRGB6.green = 2;
+    expectedRGB6.blue = 0;
+    expectedRGB7.red = 0;
+    expectedRGB7.green = 1;
+    expectedRGB7.blue = 0;
+
+    InSequence dummy;
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(0, RGBStatusEqual(expectedRGB0))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(1, RGBStatusEqual(expectedRGB1))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(2, RGBStatusEqual(expectedRGB2))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(3, RGBStatusEqual(expectedRGB3))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(4, RGBStatusEqual(expectedRGB4))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(5, RGBStatusEqual(expectedRGB5))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(6, RGBStatusEqual(expectedRGB6))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(7, RGBStatusEqual(expectedRGB7))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_blues_on_rgbs)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
+    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+    rgbFeatureHandlerInit.numRGBs = 16;
+    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+    rgbFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (4 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 8;
+    initiatingCANMessage.data[0] = 16;
+    initiatingCANMessage.data[1] = 32;
+    initiatingCANMessage.data[2] = 64;
+    initiatingCANMessage.data[3] = 128;
+    initiatingCANMessage.data[4] = 8;
+    initiatingCANMessage.data[5] = 4;
+    initiatingCANMessage.data[6] = 2;
+    initiatingCANMessage.data[7] = 1;
+
+    diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
+    expectedRGB0.red = 0;
+    expectedRGB0.green = 0;
+    expectedRGB0.blue = 16;
+    expectedRGB1.red = 0;
+    expectedRGB1.green = 0;
+    expectedRGB1.blue = 32;
+    expectedRGB2.red = 0;
+    expectedRGB2.green = 0;
+    expectedRGB2.blue = 64;
+    expectedRGB3.red = 0;
+    expectedRGB3.green = 0;
+    expectedRGB3.blue = 128;
+    expectedRGB4.red = 0;
+    expectedRGB4.green = 0;
+    expectedRGB4.blue = 8;
+    expectedRGB5.red = 0;
+    expectedRGB5.green = 0;
+    expectedRGB5.blue = 4;
+    expectedRGB6.red = 0;
+    expectedRGB6.green = 0;
+    expectedRGB6.blue = 2;
+    expectedRGB7.red = 0;
+    expectedRGB7.green = 0;
+    expectedRGB7.blue = 1;
+
+    InSequence dummy;
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(0, RGBStatusEqual(expectedRGB0))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(1, RGBStatusEqual(expectedRGB1))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(2, RGBStatusEqual(expectedRGB2))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(3, RGBStatusEqual(expectedRGB3))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(4, RGBStatusEqual(expectedRGB4))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(5, RGBStatusEqual(expectedRGB5))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(6, RGBStatusEqual(expectedRGB6))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(7, RGBStatusEqual(expectedRGB7))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_reds_on_rgbs)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;
@@ -637,62 +761,186 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_change
     initiatingCANMessage.data[7] = 1;
 
     diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
-    expectedRGB0.state1 = 16;
-    expectedRGB0.state1Duration = 0;
-    expectedRGB0.state2 = 0;
-    expectedRGB0.state2Duration = 0;
-    expectedRGB0.state3 = 0;
-    expectedRGB0.state3Duration = 0;
-    expectedRGB0.numStates = 1;
-    expectedRGB1.state1 = 32;
-    expectedRGB1.state1Duration = 0;
-    expectedRGB1.state2 = 0;
-    expectedRGB1.state2Duration = 0;
-    expectedRGB1.state3 = 0;
-    expectedRGB1.state3Duration = 0;
-    expectedRGB1.numStates = 1;
-    expectedRGB2.state1 = 64;
-    expectedRGB2.state1Duration = 0;
-    expectedRGB2.state2 = 0;
-    expectedRGB2.state2Duration = 0;
-    expectedRGB2.state3 = 0;
-    expectedRGB2.state3Duration = 0;
-    expectedRGB2.numStates = 1;
-    expectedRGB3.state1 = 128;
-    expectedRGB3.state1Duration = 0;
-    expectedRGB3.state2 = 0;
-    expectedRGB3.state2Duration = 0;
-    expectedRGB3.state3 = 0;
-    expectedRGB3.state3Duration = 0;
-    expectedRGB3.numStates = 1;
-    expectedRGB4.state1 = 8;
-    expectedRGB4.state1Duration = 0;
-    expectedRGB4.state2 = 0;
-    expectedRGB4.state2Duration = 0;
-    expectedRGB4.state3 = 0;
-    expectedRGB4.state3Duration = 0;
-    expectedRGB4.numStates = 1;
-    expectedRGB5.state1 = 4;
-    expectedRGB5.state1Duration = 0;
-    expectedRGB5.state2 = 0;
-    expectedRGB5.state2Duration = 0;
-    expectedRGB5.state3 = 0;
-    expectedRGB5.state3Duration = 0;
-    expectedRGB5.numStates = 1;
-    expectedRGB6.state1 = 2;
-    expectedRGB6.state1Duration = 0;
-    expectedRGB6.state2 = 0;
-    expectedRGB6.state2Duration = 0;
-    expectedRGB6.state3 = 0;
-    expectedRGB6.state3Duration = 0;
-    expectedRGB6.numStates = 1;
-    expectedRGB7.state1 = 1;
-    expectedRGB7.state1Duration = 0;
-    expectedRGB7.state2 = 0;
-    expectedRGB7.state2Duration = 0;
-    expectedRGB7.state3 = 0;
-    expectedRGB7.state3Duration = 0;
-    expectedRGB7.numStates = 1;
+    expectedRGB0.red = 16;
+    expectedRGB0.green = 0;
+    expectedRGB0.blue = 0;
+    expectedRGB1.red = 32;
+    expectedRGB1.green = 0;
+    expectedRGB1.blue = 0;
+    expectedRGB2.red = 64;
+    expectedRGB2.green = 0;
+    expectedRGB2.blue = 0;
+    expectedRGB3.red = 128;
+    expectedRGB3.green = 0;
+    expectedRGB3.blue = 0;
+    expectedRGB4.red = 8;
+    expectedRGB4.green = 0;
+    expectedRGB4.blue = 0;
+    expectedRGB5.red = 4;
+    expectedRGB5.green = 0;
+    expectedRGB5.blue = 0;
+    expectedRGB6.red = 2;
+    expectedRGB6.green = 0;
+    expectedRGB6.blue = 0;
+    expectedRGB7.red = 1;
+    expectedRGB7.green = 0;
+    expectedRGB7.blue = 0;
+
+    InSequence dummy;
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(8, RGBStatusEqual(expectedRGB0))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(9, RGBStatusEqual(expectedRGB1))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(10, RGBStatusEqual(expectedRGB2))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(11, RGBStatusEqual(expectedRGB3))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(12, RGBStatusEqual(expectedRGB4))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(13, RGBStatusEqual(expectedRGB5))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(14, RGBStatusEqual(expectedRGB6))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(15, RGBStatusEqual(expectedRGB7))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_greens_on_rgbs)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
+    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+    rgbFeatureHandlerInit.numRGBs = 16;
+    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+    rgbFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (3 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 8;
+    initiatingCANMessage.data[0] = 16;
+    initiatingCANMessage.data[1] = 32;
+    initiatingCANMessage.data[2] = 64;
+    initiatingCANMessage.data[3] = 128;
+    initiatingCANMessage.data[4] = 8;
+    initiatingCANMessage.data[5] = 4;
+    initiatingCANMessage.data[6] = 2;
+    initiatingCANMessage.data[7] = 1;
+
+    diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
+    expectedRGB0.red = 0;
+    expectedRGB0.green = 16;
+    expectedRGB0.blue = 0;
+    expectedRGB1.red = 0;
+    expectedRGB1.green = 32;
+    expectedRGB1.blue = 0;
+    expectedRGB2.red = 0;
+    expectedRGB2.green = 64;
+    expectedRGB2.blue = 0;
+    expectedRGB3.red = 0;
+    expectedRGB3.green = 128;
+    expectedRGB3.blue = 0;
+    expectedRGB4.red = 0;
+    expectedRGB4.green = 8;
+    expectedRGB4.blue = 0;
+    expectedRGB5.red = 0;
+    expectedRGB5.green = 4;
+    expectedRGB5.blue = 0;
+    expectedRGB6.red = 0;
+    expectedRGB6.green = 2;
+    expectedRGB6.blue = 0;
+    expectedRGB7.red = 0;
+    expectedRGB7.green = 1;
+    expectedRGB7.blue = 0;
+
+    InSequence dummy;
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(8, RGBStatusEqual(expectedRGB0))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(9, RGBStatusEqual(expectedRGB1))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(10, RGBStatusEqual(expectedRGB2))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(11, RGBStatusEqual(expectedRGB3))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(12, RGBStatusEqual(expectedRGB4))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(13, RGBStatusEqual(expectedRGB5))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(14, RGBStatusEqual(expectedRGB6))).Times(1);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(15, RGBStatusEqual(expectedRGB7))).Times(1);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_blues_on_rgbs)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
+    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+    rgbFeatureHandlerInit.numRGBs = 16;
+    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+    rgbFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 8;
+    initiatingCANMessage.data[0] = 16;
+    initiatingCANMessage.data[1] = 32;
+    initiatingCANMessage.data[2] = 64;
+    initiatingCANMessage.data[3] = 128;
+    initiatingCANMessage.data[4] = 8;
+    initiatingCANMessage.data[5] = 4;
+    initiatingCANMessage.data[6] = 2;
+    initiatingCANMessage.data[7] = 1;
+
+    diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5, expectedRGB6, expectedRGB7;
+    expectedRGB0.red = 0;
+    expectedRGB0.green = 0;
+    expectedRGB0.blue = 16;
+    expectedRGB1.red = 0;
+    expectedRGB1.green = 0;
+    expectedRGB1.blue = 32;
+    expectedRGB2.red = 0;
+    expectedRGB2.green = 0;
+    expectedRGB2.blue = 64;
+    expectedRGB3.red = 0;
+    expectedRGB3.green = 0;
+    expectedRGB3.blue = 128;
+    expectedRGB4.red = 0;
+    expectedRGB4.green = 0;
+    expectedRGB4.blue = 8;
+    expectedRGB5.red = 0;
+    expectedRGB5.green = 0;
+    expectedRGB5.blue = 4;
+    expectedRGB6.red = 0;
+    expectedRGB6.green = 0;
+    expectedRGB6.blue = 2;
+    expectedRGB7.red = 0;
+    expectedRGB7.green = 0;
+    expectedRGB7.blue = 1;
 
     InSequence dummy;
     EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
@@ -733,15 +981,16 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_with_no
     diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
 
     diypinball_canMessage_t initiatingCANMessage;
+    for(uint8_t i = 0; i < 6; i++) {
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.rtr = 0;
+        initiatingCANMessage.dlc = 0;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
-    initiatingCANMessage.rtr = 0;
-    initiatingCANMessage.dlc = 0;
+        EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+        EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(_, _)).Times(0);
 
-    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
-    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(_, _)).Times(0);
-
-    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
 }
 
 TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_does_nothing)
@@ -770,7 +1019,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_doe
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    for(uint8_t i = 2; i < 16; i++) {
+    for(uint8_t i = 6; i < 16; i++) {
         initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 0;
         initiatingCANMessage.dlc = 8;
@@ -816,7 +1065,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 16;
@@ -827,48 +1076,24 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high
     initiatingCANMessage.data[5] = 4;
 
     diypinball_rgbStatus_t expectedRGB0, expectedRGB1, expectedRGB2, expectedRGB3, expectedRGB4, expectedRGB5;
-    expectedRGB0.state1 = 16;
-    expectedRGB0.state1Duration = 0;
-    expectedRGB0.state2 = 0;
-    expectedRGB0.state2Duration = 0;
-    expectedRGB0.state3 = 0;
-    expectedRGB0.state3Duration = 0;
-    expectedRGB0.numStates = 1;
-    expectedRGB1.state1 = 32;
-    expectedRGB1.state1Duration = 0;
-    expectedRGB1.state2 = 0;
-    expectedRGB1.state2Duration = 0;
-    expectedRGB1.state3 = 0;
-    expectedRGB1.state3Duration = 0;
-    expectedRGB1.numStates = 1;
-    expectedRGB2.state1 = 64;
-    expectedRGB2.state1Duration = 0;
-    expectedRGB2.state2 = 0;
-    expectedRGB2.state2Duration = 0;
-    expectedRGB2.state3 = 0;
-    expectedRGB2.state3Duration = 0;
-    expectedRGB2.numStates = 1;
-    expectedRGB3.state1 = 128;
-    expectedRGB3.state1Duration = 0;
-    expectedRGB3.state2 = 0;
-    expectedRGB3.state2Duration = 0;
-    expectedRGB3.state3 = 0;
-    expectedRGB3.state3Duration = 0;
-    expectedRGB3.numStates = 1;
-    expectedRGB4.state1 = 8;
-    expectedRGB4.state1Duration = 0;
-    expectedRGB4.state2 = 0;
-    expectedRGB4.state2Duration = 0;
-    expectedRGB4.state3 = 0;
-    expectedRGB4.state3Duration = 0;
-    expectedRGB4.numStates = 1;
-    expectedRGB5.state1 = 4;
-    expectedRGB5.state1Duration = 0;
-    expectedRGB5.state2 = 0;
-    expectedRGB5.state2Duration = 0;
-    expectedRGB5.state3 = 0;
-    expectedRGB5.state3Duration = 0;
-    expectedRGB5.numStates = 1;
+    expectedRGB0.red = 0;
+    expectedRGB0.green = 0;
+    expectedRGB0.blue = 16;
+    expectedRGB1.red = 0;
+    expectedRGB1.green = 0;
+    expectedRGB1.blue = 32;
+    expectedRGB2.red = 0;
+    expectedRGB2.green = 0;
+    expectedRGB2.blue = 64;
+    expectedRGB3.red = 0;
+    expectedRGB3.green = 0;
+    expectedRGB3.blue = 128;
+    expectedRGB4.red = 0;
+    expectedRGB4.green = 0;
+    expectedRGB4.blue = 8;
+    expectedRGB5.red = 0;
+    expectedRGB5.green = 0;
+    expectedRGB5.blue = 4;
 
     InSequence dummy;
     EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
@@ -883,4 +1108,45 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
-*/
+
+TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_low_set_does_nothing)
+{
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+    diypinball_featureRouterInstance_t router;
+    diypinball_featureRouterInit_t routerInit;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
+    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+    rgbFeatureHandlerInit.numRGBs = 14;
+    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+    rgbFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.rtr = 0;
+    initiatingCANMessage.dlc = 6;
+    initiatingCANMessage.data[0] = 16;
+    initiatingCANMessage.data[1] = 32;
+    initiatingCANMessage.data[2] = 64;
+    initiatingCANMessage.data[3] = 128;
+    initiatingCANMessage.data[4] = 8;
+    initiatingCANMessage.data[5] = 4;
+
+    EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+    EXPECT_CALL(myRGBFeatureHandlerHandlers, testRGBChangedHandler(_, _)).Times(0);
+
+    diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}

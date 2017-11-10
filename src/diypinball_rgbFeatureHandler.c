@@ -69,12 +69,14 @@ static void setAllRGBs(diypinball_rgbFeatureHandlerInstance_t *instance, diypinb
 
     uint8_t i;
     for(i=rgbBase; i <= rgbMax; i++) {
-        if((message->featureNum & 0x0E) == 0x02) {
+        if((message->featureNum & 0x0E) == 0x00) {
             instance->rgbs[i].red = message->data[i - rgbBase];
-        } else if((message->featureNum & 0x0E) == 0x04) {
+        } else if((message->featureNum & 0x0E) == 0x02) {
             instance->rgbs[i].green = message->data[i - rgbBase];
-        } else if((message->featureNum & 0x0E) == 0x06) {
+        } else if((message->featureNum & 0x0E) == 0x04) {
             instance->rgbs[i].blue = message->data[i - rgbBase];
+        } else {
+            break; // invalid colour/set to address
         }
 
         (instance->rgbChangedHandler)(i, instance->rgbs[i]);
