@@ -171,7 +171,7 @@ static void runCheckBufferCRC(diypinball_bootloaderFeatureHandlerInstance_t* ins
 
         result = (instance->bufferHashHandler)(param);
     }
-    
+
     response.data[0] = result;
 
     response.dataLength = 1;
@@ -185,6 +185,48 @@ static void doApplicationReboot(diypinball_bootloaderFeatureHandlerInstance_t* i
             (instance->rebootHandler)();
         }
     }
+}
+
+static void runWriteToBuffer(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    uint8_t offset, i;
+
+    offset = 0;
+    offset |= message->featureNum & 0x0f;
+    offset <<= 3;
+    offset |= ((message->function & 0x0e) >> 1);
+
+    if(message->dataLength < 8) { // we write 0xff to any byte not specified.
+        for(i = message->dataLength; i < 8; i++) {
+            message->data[i] = 0xff;
+        }
+    }
+
+    (instance->bufferWriteHandler)(offset, message->data);
+}
+
+static void runReadFromBuffer(diypinball_bootloaderFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t *message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x07;
+    response.featureNum = message->featureNum;
+    response.function = message->function;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    uint8_t offset;
+
+    offset = 0;
+    offset |= message->featureNum & 0x0f;
+    offset <<= 3;
+    offset |= ((message->function & 0x0e) >> 1);
+
+    (instance->bufferReadHandler)(offset, response.data);
+
+    response.dataLength = 8;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
 }
 
 void diypinball_bootloaderFeatureHandler_init(diypinball_bootloaderFeatureHandlerInstance_t *instance, diypinball_bootloaderFeatureHandlerInit_t *init) {
@@ -256,6 +298,14 @@ void diypinball_bootloaderFeatureHandler_messageReceivedHandler(void *instance, 
         if(message->messageType == MESSAGE_COMMAND) doApplicationReboot(typedInstance, message);
         break;
     default:
+        if(message->function & 0x01) {
+            // these are buffer operations
+            if(message->messageType == MESSAGE_REQUEST) {
+                runReadFromBuffer(typedInstance, message);
+            } else if(message->messageType == MESSAGE_COMMAND) {
+                runWriteToBuffer(typedInstance, message);
+            }
+        }
         break;
     }
 }

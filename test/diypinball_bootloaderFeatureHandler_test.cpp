@@ -12,6 +12,9 @@
 using ::testing::Return;
 using ::testing::_;
 using ::testing::InSequence;
+using ::testing::ElementsAreArray;
+using ::testing::Args;
+using ::testing::SetArrayArgument;
 
 class MockBootloaderHandlers {
 public:
@@ -60,6 +63,14 @@ extern "C" {
     static void testBufferWriteHandler(uint8_t offset, uint8_t *data) {
         BootloaderHandlersImpl->testBufferWriteHandler(offset, data);
     }
+}
+
+MATCHER_P(BootBufferEqual, status, "") {
+    //printf("Arg: %d, %d, %d, %d\n", arg.attackState, arg.attackDuration, arg.sustainState, arg.sustainDuration);
+    //printf("Sta: %d, %d, %d, %d\n", status.attackState, status.attackDuration, status.sustainState, status.sustainDuration);
+    uint8_t fieldFlag = (memcmp(arg, status, 8));
+
+    return !(fieldFlag);
 }
 
 TEST(diypinball_bootloaderFeatureHandler_test, init_sets_up_structure)
@@ -1474,4 +1485,243 @@ TEST(diypinball_bootloaderFeatureHandler_test, buffer_check_crc_with_not_enough_
     EXPECT_CALL(myBootloaderHandlers, testBufferWriteHandler(_, _)).Times(0);
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+}
+
+TEST(diypinball_bootloaderFeatureHandler_test, buffer_write_passes_data)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockBootloaderHandlers myBootloaderHandlers;
+    BootloaderHandlersImpl = &myBootloaderHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_bootloaderFeatureHandlerInstance bootloaderFeatureHandler;
+    diypinball_bootloaderFeatureHandlerInit bootloaderFeatureHandlerInit;
+
+    bootloaderFeatureHandlerInit.applicationVersionMajor = 1;
+    bootloaderFeatureHandlerInit.applicationVersionMinor = 2;
+    bootloaderFeatureHandlerInit.applicationVersionPatch = 3;
+    bootloaderFeatureHandlerInit.flashPageSize = 2048;
+    bootloaderFeatureHandlerInit.flashBufferSize = 1024;
+    bootloaderFeatureHandlerInit.applicationBaseAddress = 0x02002000;
+    bootloaderFeatureHandlerInit.flashSize = 131072;
+    bootloaderFeatureHandlerInit.rebootHandler = testRebootHandler;
+    bootloaderFeatureHandlerInit.flashReadHandler = testFlashReadHandler;
+    bootloaderFeatureHandlerInit.flashWriteHandler = testFlashWriteHandler;
+    bootloaderFeatureHandlerInit.flashVerifyHandler = testFlashVerifyHandler;
+    bootloaderFeatureHandlerInit.bufferHashHandler = testBufferHashHandler;
+    bootloaderFeatureHandlerInit.bufferReadHandler = testBufferReadHandler;
+    bootloaderFeatureHandlerInit.bufferWriteHandler = testBufferWriteHandler;
+    bootloaderFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_bootloaderFeatureHandler_init(&bootloaderFeatureHandler, &bootloaderFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    uint8_t hi, lo;
+    uint8_t expectedArray[8];
+
+    for(uint8_t i = 0; i < 128; i++) {
+        hi = (i & 0x78) >> 3;
+        lo = ((i & 0x07) << 1) | 0x01;
+
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (7 << 12) | (hi << 8) | (lo << 4) | 0;
+        initiatingCANMessage.rtr = 0;
+        initiatingCANMessage.dlc = 8;
+        initiatingCANMessage.data[0] = 0x00;
+        initiatingCANMessage.data[1] = 0x20;
+        initiatingCANMessage.data[2] = 0x00;
+        initiatingCANMessage.data[3] = 0x40;
+        initiatingCANMessage.data[4] = 0x00;
+        initiatingCANMessage.data[5] = 0x80;
+        initiatingCANMessage.data[6] = 0x00;
+        initiatingCANMessage.data[7] = 0x10;
+
+        expectedArray[0] = 0x00;
+        expectedArray[1] = 0x20;
+        expectedArray[2] = 0x00;
+        expectedArray[3] = 0x40;
+        expectedArray[4] = 0x00;
+        expectedArray[5] = 0x80;
+        expectedArray[6] = 0x00;
+        expectedArray[7] = 0x10;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testRebootHandler()).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashReadHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashWriteHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashVerifyHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferHashHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferReadHandler(_, _)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferWriteHandler(i, BootBufferEqual(expectedArray))).Times(1);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
+}
+
+TEST(diypinball_bootloaderFeatureHandler_test, buffer_write_pads_data)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockBootloaderHandlers myBootloaderHandlers;
+    BootloaderHandlersImpl = &myBootloaderHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_bootloaderFeatureHandlerInstance bootloaderFeatureHandler;
+    diypinball_bootloaderFeatureHandlerInit bootloaderFeatureHandlerInit;
+
+    bootloaderFeatureHandlerInit.applicationVersionMajor = 1;
+    bootloaderFeatureHandlerInit.applicationVersionMinor = 2;
+    bootloaderFeatureHandlerInit.applicationVersionPatch = 3;
+    bootloaderFeatureHandlerInit.flashPageSize = 2048;
+    bootloaderFeatureHandlerInit.flashBufferSize = 1024;
+    bootloaderFeatureHandlerInit.applicationBaseAddress = 0x02002000;
+    bootloaderFeatureHandlerInit.flashSize = 131072;
+    bootloaderFeatureHandlerInit.rebootHandler = testRebootHandler;
+    bootloaderFeatureHandlerInit.flashReadHandler = testFlashReadHandler;
+    bootloaderFeatureHandlerInit.flashWriteHandler = testFlashWriteHandler;
+    bootloaderFeatureHandlerInit.flashVerifyHandler = testFlashVerifyHandler;
+    bootloaderFeatureHandlerInit.bufferHashHandler = testBufferHashHandler;
+    bootloaderFeatureHandlerInit.bufferReadHandler = testBufferReadHandler;
+    bootloaderFeatureHandlerInit.bufferWriteHandler = testBufferWriteHandler;
+    bootloaderFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_bootloaderFeatureHandler_init(&bootloaderFeatureHandler, &bootloaderFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage;
+
+    uint8_t hi, lo;
+    uint8_t expectedArray[8];
+
+    for(uint8_t i = 0; i < 128; i++) {
+        hi = (i & 0x78) >> 3;
+        lo = ((i & 0x07) << 1) | 0x01;
+
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (7 << 12) | (hi << 8) | (lo << 4) | 0;
+        initiatingCANMessage.rtr = 0;
+        initiatingCANMessage.dlc = 6;
+        initiatingCANMessage.data[0] = 0x00;
+        initiatingCANMessage.data[1] = 0x20;
+        initiatingCANMessage.data[2] = 0x00;
+        initiatingCANMessage.data[3] = 0x40;
+        initiatingCANMessage.data[4] = 0x00;
+        initiatingCANMessage.data[5] = 0x80;
+
+        expectedArray[0] = 0x00;
+        expectedArray[1] = 0x20;
+        expectedArray[2] = 0x00;
+        expectedArray[3] = 0x40;
+        expectedArray[4] = 0x00;
+        expectedArray[5] = 0x80;
+        expectedArray[6] = 0xff;
+        expectedArray[7] = 0xff;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testRebootHandler()).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashReadHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashWriteHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashVerifyHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferHashHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferReadHandler(_, _)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferWriteHandler(i, BootBufferEqual(expectedArray))).Times(1);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
+}
+
+TEST(diypinball_bootloaderFeatureHandler_test, buffer_read_gets_data)
+{
+    diypinball_featureRouterInstance router;
+    diypinball_featureRouterInit routerInit;
+
+    MockCANSend myCANSend;
+    CANSendImpl = &myCANSend;
+    MockBootloaderHandlers myBootloaderHandlers;
+    BootloaderHandlersImpl = &myBootloaderHandlers;
+
+    routerInit.boardAddress = 42;
+    routerInit.canSendHandler = testCanSendHandler;
+
+    diypinball_featureRouter_init(&router, &routerInit);
+
+    diypinball_bootloaderFeatureHandlerInstance bootloaderFeatureHandler;
+    diypinball_bootloaderFeatureHandlerInit bootloaderFeatureHandlerInit;
+
+    bootloaderFeatureHandlerInit.applicationVersionMajor = 1;
+    bootloaderFeatureHandlerInit.applicationVersionMinor = 2;
+    bootloaderFeatureHandlerInit.applicationVersionPatch = 3;
+    bootloaderFeatureHandlerInit.flashPageSize = 2048;
+    bootloaderFeatureHandlerInit.flashBufferSize = 1024;
+    bootloaderFeatureHandlerInit.applicationBaseAddress = 0x02002000;
+    bootloaderFeatureHandlerInit.flashSize = 131072;
+    bootloaderFeatureHandlerInit.rebootHandler = testRebootHandler;
+    bootloaderFeatureHandlerInit.flashReadHandler = testFlashReadHandler;
+    bootloaderFeatureHandlerInit.flashWriteHandler = testFlashWriteHandler;
+    bootloaderFeatureHandlerInit.flashVerifyHandler = testFlashVerifyHandler;
+    bootloaderFeatureHandlerInit.bufferHashHandler = testBufferHashHandler;
+    bootloaderFeatureHandlerInit.bufferReadHandler = testBufferReadHandler;
+    bootloaderFeatureHandlerInit.bufferWriteHandler = testBufferWriteHandler;
+    bootloaderFeatureHandlerInit.routerInstance = &router;
+
+    diypinball_bootloaderFeatureHandler_init(&bootloaderFeatureHandler, &bootloaderFeatureHandlerInit);
+
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+
+    uint8_t hi, lo;
+    uint8_t expectedArray[8];
+
+    for(uint8_t i = 0; i < 128; i++) {
+        hi = (i & 0x78) >> 3;
+        lo = ((i & 0x07) << 1) | 0x01;
+
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (7 << 12) | (hi << 8) | (lo << 4) | 0;
+        initiatingCANMessage.rtr = 1;
+        initiatingCANMessage.dlc = 0;
+
+        expectedArray[0] = 0x20;
+        expectedArray[1] = 0x00;
+        expectedArray[2] = 0x40;
+        expectedArray[3] = 0x00;
+        expectedArray[4] = 0x80;
+        expectedArray[5] = 0x00;
+        expectedArray[6] = 0x10;
+        expectedArray[7] = 0x00;
+
+        expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (7 << 12) | (hi << 8) | (lo << 4) | 0;
+        expectedCANMessage.rtr = 0;
+        expectedCANMessage.dlc = 8;
+        expectedCANMessage.data[0] = 0x20;
+        expectedCANMessage.data[1] = 0x00;
+        expectedCANMessage.data[2] = 0x40;
+        expectedCANMessage.data[3] = 0x00;
+        expectedCANMessage.data[4] = 0x80;
+        expectedCANMessage.data[5] = 0x00;
+        expectedCANMessage.data[6] = 0x10;
+        expectedCANMessage.data[7] = 0x00;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+        EXPECT_CALL(myBootloaderHandlers, testRebootHandler()).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashReadHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashWriteHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testFlashVerifyHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferHashHandler(_)).Times(0);
+        EXPECT_CALL(myBootloaderHandlers, testBufferReadHandler(i, _)).Times(1).WillOnce(SetArrayArgument<1>(expectedArray, expectedArray+8));
+        EXPECT_CALL(myBootloaderHandlers, testBufferWriteHandler(_, _)).Times(0);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
 }
