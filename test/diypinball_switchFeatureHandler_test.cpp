@@ -56,26 +56,38 @@ extern "C" {
     }
 }
 
-TEST(diypinball_switchFeatureHandler_test, init_zeros_structure)
-{
+class diypinball_switchFeatureHandler_test : public testing::Test {
+    protected: 
+
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
+
+        diypinball_featureRouterInit_t routerInit;
+
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
+
+        switchFeatureHandlerInit.numSwitches = 15;
+        switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
+        switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
+        switchFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
+    }
+
     diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
     diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
+};
 
-    switchFeatureHandlerInit.numSwitches = 16;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
+TEST_F(diypinball_switchFeatureHandler_test, init_zeros_structure)
+{
     ASSERT_EQ(1, switchFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
@@ -101,33 +113,15 @@ TEST(diypinball_switchFeatureHandler_test, init_zeros_structure)
 
     ASSERT_EQ(&router, switchFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(&switchFeatureHandler, switchFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
-    ASSERT_EQ(16, switchFeatureHandler.numSwitches);
+    ASSERT_EQ(15, switchFeatureHandler.numSwitches);
     ASSERT_TRUE(testReadStateHandler == switchFeatureHandler.readStateHandler);
     ASSERT_TRUE(testDebounceChangedHandler == switchFeatureHandler.debounceChangedHandler);
     ASSERT_TRUE(diypinball_switchFeatureHandler_millisecondTickHandler == switchFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_switchFeatureHandler_messageReceivedHandler == switchFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_switchFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_switchFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 16;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_switchFeatureHandler_deinit(&switchFeatureHandler);
 
     ASSERT_EQ(0, switchFeatureHandler.featureHandlerInstance.featureType);
@@ -162,7 +156,7 @@ TEST(diypinball_switchFeatureHandler_test, deinit_zeros_structure)
     ASSERT_TRUE(NULL == switchFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_switchFeatureHandler_test, init_too_many_switches)
+TEST(diypinball_switchFeatureHandler_test_other, init_too_many_switches)
 {
     diypinball_featureRouterInstance_t router;
     diypinball_featureRouterInit_t routerInit;
@@ -214,31 +208,8 @@ TEST(diypinball_switchFeatureHandler_test, init_too_many_switches)
     ASSERT_TRUE(diypinball_switchFeatureHandler_messageReceivedHandler == switchFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_0_to_any_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_0_to_any_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 0; i < 16; i++) {
@@ -255,31 +226,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_0_to_any_switch_d
     }
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_0_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_0_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (0 << 4) | 0;
@@ -293,31 +241,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_0_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_0_to_valid_switch_gives_state)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_0_to_valid_switch_gives_state)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -365,31 +290,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_0_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_1_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_1_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (1 << 4) | 0;
@@ -403,31 +305,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_1_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_1_to_valid_switch_gives_polling_info)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_1_to_valid_switch_gives_polling_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -453,31 +332,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_1_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_sets_polling_info)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_sets_polling_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -494,31 +350,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch
     ASSERT_EQ(21, switchFeatureHandler.switches[0].pollingInterval);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_1_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (1 << 4) | 0;
@@ -535,31 +368,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_invalid_swit
     ASSERT_EQ(0, switchFeatureHandler.switches[15].pollingInterval);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_with_no_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -589,31 +399,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch
     ASSERT_EQ(21, switchFeatureHandler.switches[0].pollingInterval);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_then_request_gets_polling_info)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch_then_request_gets_polling_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -652,31 +439,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_1_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, switch_status_polling)
+TEST_F(diypinball_switchFeatureHandler_test, switch_status_polling)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -721,31 +485,8 @@ TEST(diypinball_switchFeatureHandler_test, switch_status_polling)
     diypinball_featureRouter_millisecondTick(&router, 10);
 }
 
-TEST(diypinball_switchFeatureHandler_test, switch_status_polling_edges)
+TEST_F(diypinball_switchFeatureHandler_test, switch_status_polling_edges)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -890,31 +631,8 @@ TEST(diypinball_switchFeatureHandler_test, switch_status_polling_edges)
     diypinball_featureRouter_millisecondTick(&router, 40);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_0_edges)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_0_edges)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -1009,31 +727,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_0_edges)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_2_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_2_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (2 << 4) | 0;
@@ -1047,31 +742,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_2_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_2_to_valid_switch_gives_triggering_info)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_2_to_valid_switch_gives_triggering_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1097,31 +769,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_2_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_sets_trigger_mask)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_sets_trigger_mask)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1138,31 +787,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch
     ASSERT_EQ(0x03, switchFeatureHandler.switches[0].messageTriggerMask);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_2_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (2 << 4) | 0;
@@ -1179,31 +805,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_invalid_swit
     ASSERT_EQ(0, switchFeatureHandler.switches[15].messageTriggerMask);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_with_no_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1233,31 +836,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch
     ASSERT_EQ(0x03, switchFeatureHandler.switches[0].messageTriggerMask);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_only_sets_valid_trigger_mask)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_only_sets_valid_trigger_mask)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1274,31 +854,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch
     ASSERT_EQ(0x03, switchFeatureHandler.switches[0].messageTriggerMask);
 }
 
-TEST(diypinball_switchFeatureHandler_test, set_rising_edge_trigger_and_register_switch_status)
+TEST_F(diypinball_switchFeatureHandler_test, set_rising_edge_trigger_and_register_switch_status)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1357,31 +914,8 @@ TEST(diypinball_switchFeatureHandler_test, set_rising_edge_trigger_and_register_
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, set_falling_edge_trigger_and_register_switch_status)
+TEST_F(diypinball_switchFeatureHandler_test, set_falling_edge_trigger_and_register_switch_status)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1440,31 +974,8 @@ TEST(diypinball_switchFeatureHandler_test, set_falling_edge_trigger_and_register
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_switch_status)
+TEST_F(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_switch_status)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1535,31 +1046,8 @@ TEST(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_sw
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, set_no_edge_trigger_and_register_switch_status)
+TEST_F(diypinball_switchFeatureHandler_test, set_no_edge_trigger_and_register_switch_status)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     ASSERT_EQ(0x00, switchFeatureHandler.switches[0].messageTriggerMask);
 
     EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
@@ -1593,31 +1081,8 @@ TEST(diypinball_switchFeatureHandler_test, set_no_edge_trigger_and_register_swit
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_different_switch_status)
+TEST_F(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_different_switch_status)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1664,31 +1129,8 @@ TEST(diypinball_switchFeatureHandler_test, set_both_edge_trigger_and_register_di
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 1, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_then_request_gets_trigger_info)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch_then_request_gets_trigger_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -1727,31 +1169,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_2_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_3_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_3_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (3 << 4) | 0;
@@ -1765,31 +1184,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_3_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_3_to_valid_switch_gives_debouncing_info)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_3_to_valid_switch_gives_debouncing_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -1815,31 +1211,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_3_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_sets_trigger_mask)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_sets_trigger_mask)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -1856,31 +1229,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch
     ASSERT_EQ(120, switchFeatureHandler.switches[0].debounceLimit);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_3_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (3 << 4) | 0;
@@ -1897,31 +1247,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_invalid_swit
     ASSERT_EQ(0, switchFeatureHandler.switches[15].debounceLimit);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_with_no_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -1951,31 +1278,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch
     ASSERT_EQ(120, switchFeatureHandler.switches[0].debounceLimit);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_then_request_gets_debounce_info)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch_then_request_gets_debounce_info)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -2014,31 +1318,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_3_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_7_through_15_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_7_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 7; i < 16; i++) {
@@ -2056,31 +1337,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_7_through_15_does
     }
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_7_through_15_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_7_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 7; i < 16; i++) {
@@ -2100,7 +1358,7 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_7_through_15_does
     }
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_6_gives_all_switch_statuses)
+TEST(diypinball_switchFeatureHandler_test_other, request_to_function_6_gives_all_switch_statuses)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;
@@ -2144,31 +1402,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_6_gives_all_switc
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_6_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_6_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandlerAll;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (6 << 4) | 0;
@@ -2183,31 +1418,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_6_does_nothing)
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_4_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_4_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (4 << 4) | 0;
@@ -2221,31 +1433,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_4_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_4_to_valid_switch_gives_rule_data)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_4_to_valid_switch_gives_rule_data)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2271,31 +1460,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_4_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_sets_rule_data)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_sets_rule_data)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2324,31 +1490,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].openRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (4 << 4) | 0;
@@ -2371,31 +1514,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_invalid_swit
     ASSERT_EQ(0, switchFeatureHandler.switches[0].openRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_no_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2418,31 +1538,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].openRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_not_enough_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_not_enough_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2465,31 +1562,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].openRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_not_enough_data_for_sustain_only_sets_attack)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_with_not_enough_data_for_sustain_only_sets_attack)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2518,31 +1592,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].openRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_and_request_back)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch_and_request_back)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -2593,31 +1644,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_4_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_5_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_5_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (5 << 4) | 0;
@@ -2631,31 +1659,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_5_to_invalid_swit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, request_to_function_5_to_valid_switch_gives_rule_data)
+TEST_F(diypinball_switchFeatureHandler_test, request_to_function_5_to_valid_switch_gives_rule_data)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -2681,31 +1686,8 @@ TEST(diypinball_switchFeatureHandler_test, request_to_function_5_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_sets_rule_data)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_sets_rule_data)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -2734,31 +1716,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].closeRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_invalid_switch_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_invalid_switch_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (15 << 8) | (5 << 4) | 0;
@@ -2781,31 +1740,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_invalid_swit
     ASSERT_EQ(0, switchFeatureHandler.switches[0].closeRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_no_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -2828,31 +1764,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].closeRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_not_enough_data_does_nothing)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_not_enough_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -2875,31 +1788,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].closeRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_not_enough_data_for_sustain_only_sets_attack)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_with_not_enough_data_for_sustain_only_sets_attack)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -2928,31 +1818,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch
     ASSERT_EQ(0, switchFeatureHandler.switches[0].closeRule.sustainDuration);
 }
 
-TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_and_request_back)
+TEST_F(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch_and_request_back)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -3003,31 +1870,8 @@ TEST(diypinball_switchFeatureHandler_test, message_to_function_5_to_valid_switch
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_closed_rule_fires_with_switch_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_closed_rule_fires_with_switch_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1, expectedCANMessage2;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0; // enable close rule
@@ -3087,31 +1931,8 @@ TEST(diypinball_switchFeatureHandler_test, test_closed_rule_fires_with_switch_tr
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 1);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_open_rule_fires_with_switch_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_open_rule_fires_with_switch_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1, expectedCANMessage2;
 
     initiatingCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0; // enable open rule
@@ -3171,31 +1992,8 @@ TEST(diypinball_switchFeatureHandler_test, test_open_rule_fires_with_switch_trig
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_closed_rule_fires_without_switch_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_closed_rule_fires_without_switch_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0; // enable close rule
@@ -3236,31 +2034,8 @@ TEST(diypinball_switchFeatureHandler_test, test_closed_rule_fires_without_switch
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 1);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_open_rule_fires_without_switch_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_open_rule_fires_without_switch_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0; // enable open rule
@@ -3301,31 +2076,8 @@ TEST(diypinball_switchFeatureHandler_test, test_open_rule_fires_without_switch_t
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 0);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sends_solenoid_off)
+TEST_F(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sends_solenoid_off)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0; // enable close rule
@@ -3362,31 +2114,8 @@ TEST(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sen
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_open_rule_enabled_disabled_sends_solenoid_off)
+TEST_F(diypinball_switchFeatureHandler_test, test_open_rule_enabled_disabled_sends_solenoid_off)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0; // enable open rule
@@ -3423,31 +2152,8 @@ TEST(diypinball_switchFeatureHandler_test, test_open_rule_enabled_disabled_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sends_solenoid_off_with_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sends_solenoid_off_with_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (5 << 4) | 0; // enable close rule
@@ -3509,31 +2215,8 @@ TEST(diypinball_switchFeatureHandler_test, test_closed_rule_enabled_disabled_sen
     diypinball_switchFeatureHandler_registerSwitchState(&switchFeatureHandler, 0, 1);
 }
 
-TEST(diypinball_switchFeatureHandler_test, test_open_rule_enabled_disabled_sends_solenoid_off_with_triggering)
+TEST_F(diypinball_switchFeatureHandler_test, test_open_rule_enabled_disabled_sends_solenoid_off_with_triggering)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSwitchFeatureHandlerHandlers mySwitchFeatureHandlerHandlers;
-    SwitchFeatureHandlerHandlersImpl = &mySwitchFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_switchFeatureHandlerInstance_t switchFeatureHandler;
-    diypinball_switchFeatureHandlerInit_t switchFeatureHandlerInit;
-
-    switchFeatureHandlerInit.numSwitches = 15;
-    switchFeatureHandlerInit.debounceChangedHandler = testDebounceChangedHandler;
-    switchFeatureHandlerInit.readStateHandler = testReadStateHandler;
-    switchFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_switchFeatureHandler_init(&switchFeatureHandler, &switchFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage1;
 
     initiatingCANMessage.id = (0x01 << 25) | (1 << 24) | (42 << 16) | (1 << 12) | (0 << 8) | (4 << 4) | 0; // enable open rule
