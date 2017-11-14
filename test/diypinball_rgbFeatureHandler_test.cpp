@@ -33,8 +33,6 @@ extern "C" {
 }
 
 MATCHER_P(RGBStatusEqual, status, "") {
-    //printf("Arg: %d, %d, %d, %d, %d, %d, %d\n", arg.state1, arg.state1Duration, arg.state2, arg.state2Duration, arg.state3, arg.state3Duration, arg.numStates);
-    //printf("Sta: %d, %d, %d, %d, %d, %d, %d\n", status.state1, status.state1Duration, status.state2, status.state2Duration, status.state3, status.state3Duration, status.numStates);
     uint8_t fieldFlag = (arg.red == status.red) &&
         (arg.green == status.green) &&
         (arg.blue == status.blue);
