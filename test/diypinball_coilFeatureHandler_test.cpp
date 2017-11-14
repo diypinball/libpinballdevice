@@ -43,25 +43,37 @@ MATCHER_P(CoilStatusEqual, status, "") {
     return !(!fieldFlag);
 }
 
-TEST(diypinball_coilFeatureHandler_test, init_zeros_structure)
-{
+class diypinball_coilFeatureHandler_test : public testing::Test {
+    protected: 
+
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
+
+        diypinball_featureRouterInit_t routerInit;
+
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
+
+        coilFeatureHandlerInit.numCoils = 15;
+        coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
+        coilFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
+    }
+
     diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
     diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
+};
 
-    coilFeatureHandlerInit.numCoils = 16;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
+TEST_F(diypinball_coilFeatureHandler_test, init_zeros_structure)
+{
     ASSERT_EQ(3, coilFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
@@ -73,31 +85,14 @@ TEST(diypinball_coilFeatureHandler_test, init_zeros_structure)
 
     ASSERT_EQ(&router, coilFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(&coilFeatureHandler, coilFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
-    ASSERT_EQ(16, coilFeatureHandler.numCoils);
+    ASSERT_EQ(15, coilFeatureHandler.numCoils);
     ASSERT_TRUE(testCoilChangedHandler == coilFeatureHandler.coilChangedHandler);
     ASSERT_TRUE(diypinball_coilFeatureHandler_millisecondTickHandler == coilFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_coilFeatureHandler_messageReceivedHandler == coilFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_coilFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_coilFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 16;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_coilFeatureHandler_deinit(&coilFeatureHandler);
 
     ASSERT_EQ(0, coilFeatureHandler.featureHandlerInstance.featureType);
@@ -117,7 +112,7 @@ TEST(diypinball_coilFeatureHandler_test, deinit_zeros_structure)
     ASSERT_TRUE(NULL == coilFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_coilFeatureHandler_test, init_too_many_coils)
+TEST(diypinball_coilFeatureHandler_test_other, init_too_many_coils)
 {
     diypinball_featureRouterInstance_t router;
     diypinball_featureRouterInit_t routerInit;
@@ -153,30 +148,8 @@ TEST(diypinball_coilFeatureHandler_test, init_too_many_coils)
     ASSERT_TRUE(diypinball_coilFeatureHandler_messageReceivedHandler == coilFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_coilFeatureHandler_test, request_to_function_0_to_invalid_coil_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, request_to_function_0_to_invalid_coil_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (15 << 8) | (0 << 4) | 0;
@@ -189,30 +162,8 @@ TEST(diypinball_coilFeatureHandler_test, request_to_function_0_to_invalid_coil_d
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, request_to_function_0_to_valid_coil_returns_coil_state)
+TEST_F(diypinball_coilFeatureHandler_test, request_to_function_0_to_valid_coil_returns_coil_state)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -233,30 +184,8 @@ TEST(diypinball_coilFeatureHandler_test, request_to_function_0_to_valid_coil_ret
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_invalid_coil_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_invalid_coil_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (15 << 8) | (0 << 4) | 0;
@@ -270,30 +199,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_invalid_coil_d
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_no_data_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -307,30 +214,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_not_enough_data_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_not_enough_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -344,30 +229,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_enough_data_sets_attack_only_and_sets_coil)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_enough_data_sets_attack_only_and_sets_coil)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -388,30 +251,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_more_than_enough_data_sets_attack_only_and_sets_coil)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_more_than_enough_data_sets_attack_only_and_sets_coil)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -433,30 +274,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_enough_data_sets_attack_and_sustain_and_sets_coil_then_retrieve)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and_enough_data_sets_attack_and_sustain_and_sets_coil_then_retrieve)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -496,30 +315,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_then_update_then_retrieve)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_then_update_then_retrieve)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (3 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -567,30 +364,8 @@ TEST(diypinball_coilFeatureHandler_test, message_to_function_0_to_valid_coil_the
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_coilFeatureHandler_test, request_to_function_1_through_15_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, request_to_function_1_through_15_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 1; i < 16; i++) {
@@ -607,30 +382,8 @@ TEST(diypinball_coilFeatureHandler_test, request_to_function_1_through_15_does_n
     }
 }
 
-TEST(diypinball_coilFeatureHandler_test, message_to_function_1_through_15_does_nothing)
+TEST_F(diypinball_coilFeatureHandler_test, message_to_function_1_through_15_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockCoilFeatureHandlerHandlers myCoilFeatureHandlerHandlers;
-    CoilFeatureHandlerHandlersImpl = &myCoilFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_coilFeatureHandlerInstance_t coilFeatureHandler;
-    diypinball_coilFeatureHandlerInit_t coilFeatureHandlerInit;
-
-    coilFeatureHandlerInit.numCoils = 15;
-    coilFeatureHandlerInit.coilChangedHandler = testCoilChangedHandler;
-    coilFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_coilFeatureHandler_init(&coilFeatureHandler, &coilFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 7; i < 16; i++) {
