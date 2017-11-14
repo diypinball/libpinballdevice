@@ -33,8 +33,6 @@ extern "C" {
 }
 
 MATCHER_P(CoilStatusEqual, status, "") {
-    //printf("Arg: %d, %d, %d, %d\n", arg.attackState, arg.attackDuration, arg.sustainState, arg.sustainDuration);
-    //printf("Sta: %d, %d, %d, %d\n", status.attackState, status.attackDuration, status.sustainState, status.sustainDuration);
     uint8_t fieldFlag = (arg.attackState == status.attackState) &&
         (arg.attackDuration == status.attackDuration) &&
         (arg.sustainState == status.sustainState) &&
