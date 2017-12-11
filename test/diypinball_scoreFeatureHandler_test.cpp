@@ -285,3 +285,63 @@ TEST_F(diypinball_scoreFeatureHandler_test, request_to_feature_0_gets_display_wh
         diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
     }
 }
+
+TEST_F(diypinball_scoreFeatureHandler_test, request_to_feature_1_gets_brightness_initial)
+{
+    diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
+    uint8_t i;
+
+    for(i=0; i<16; i++) {
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.rtr = 1;
+        initiatingCANMessage.dlc = 0;
+
+        expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        expectedCANMessage.rtr = 0;
+        expectedCANMessage.dlc = 1;
+        expectedCANMessage.data[0] = 0;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testDisplayChangedHandler(_)).Times(0);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testBrightnessChangedHandler(_)).Times(0);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
+}
+
+TEST_F(diypinball_scoreFeatureHandler_test, message_to_feature_1_and_no_data_does_nothing)
+{
+    diypinball_canMessage_t initiatingCANMessage;
+    uint8_t i;
+
+    for(i=0; i<16; i++) {
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.rtr = 0;
+        initiatingCANMessage.dlc = 0;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testDisplayChangedHandler(_)).Times(0);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testBrightnessChangedHandler(_)).Times(0);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
+}
+
+TEST_F(diypinball_scoreFeatureHandler_test, message_to_feature_1_with_data_sets_brightness)
+{
+    diypinball_canMessage_t initiatingCANMessage;
+    uint8_t i;
+
+    for(i=0; i<16; i++) {
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.rtr = 0;
+        initiatingCANMessage.dlc = 1;
+        initiatingCANMessage.data[0] = 142;
+
+        EXPECT_CALL(myCANSend, testCanSendHandler(_)).Times(0);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testDisplayChangedHandler(_)).Times(0);
+        EXPECT_CALL(myScoreFeatureHandlerHandlers, testBrightnessChangedHandler(142)).Times(1);
+
+        diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
+    }
+}

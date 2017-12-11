@@ -27,6 +27,34 @@ static void setDisplay(diypinball_scoreFeatureHandlerInstance_t* instance, diypi
     instance->displayChangedHandler(instance->display);
 }
 
+static void sendBrightness(diypinball_scoreFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t* message) {
+    diypinball_pinballMessage_t response;
+
+    response.priority = message->priority;
+    response.unitSpecific = 0x01;
+    response.featureType = 0x04;
+    response.featureNum = message->featureNum;
+    response.function = 0x01;
+    response.reserved = 0x00;
+    response.messageType = MESSAGE_RESPONSE;
+
+    response.dataLength = 1;
+
+    response.data[0] = instance->brightness;
+
+    diypinball_featureRouter_sendPinballMessage(instance->featureHandlerInstance.routerInstance, &response);
+}
+
+static void setBrightness(diypinball_scoreFeatureHandlerInstance_t* instance, diypinball_pinballMessage_t* message) {
+    if(message->dataLength == 0) {
+        return;
+    }
+
+    instance->brightness = message->data[0];
+
+    instance->brightnessChangedHandler(instance->brightness);
+}
+
 void diypinball_scoreFeatureHandler_init(diypinball_scoreFeatureHandlerInstance_t *instance, diypinball_scoreFeatureHandlerInit_t *init) {
     instance->brightness = 0;
     instance->displayChangedHandler = init->displayChangedHandler;
@@ -60,6 +88,12 @@ void diypinball_scoreFeatureHandler_messageReceivedHandler(void *instance, diypi
             setDisplay(typedInstance, message);
         }
         break;
+    case 0x01: // display brightness - set or request
+        if(message->messageType == MESSAGE_REQUEST) {
+            sendBrightness(typedInstance, message);
+        } else {
+            setBrightness(typedInstance, message);
+        }
     default:
         break;
     }
