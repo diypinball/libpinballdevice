@@ -71,7 +71,7 @@ class diypinball_rgbFeatureHandler_test : public testing::Test {
 
 TEST_F(diypinball_rgbFeatureHandler_test, init_zeros_structure)
 {
-    ASSERT_EQ(4, rgbFeatureHandler.featureHandlerInstance.featureType);
+    ASSERT_EQ(5, rgbFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, rgbFeatureHandler.rgbs[i].red);
@@ -126,7 +126,7 @@ TEST(diypinball_rgbFeatureHandler_test_other, init_too_many_rgbs)
 
     diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
 
-    ASSERT_EQ(4, rgbFeatureHandler.featureHandlerInstance.featureType);
+    ASSERT_EQ(5, rgbFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, rgbFeatureHandler.rgbs[i].red);
@@ -146,7 +146,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_0_to_invalid_rgb_d
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (15 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (15 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
 
@@ -160,11 +160,11 @@ TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_0_to_valid_rgb_ret
 {
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
 
-    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (0 << 4) | 0;
     expectedCANMessage.rtr = 0;
     expectedCANMessage.dlc = 3;
     expectedCANMessage.data[0] = 0;
@@ -181,7 +181,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_invalid_rgb_d
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (15 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (15 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 1;
     initiatingCANMessage.data[0] = 0;
@@ -196,7 +196,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_and
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 0;
     initiatingCANMessage.data[0] = 0;
@@ -211,7 +211,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_wit
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 1;
     initiatingCANMessage.data[0] = 126;
@@ -226,7 +226,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_wit
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 3;
     initiatingCANMessage.data[0] = 126;
@@ -248,7 +248,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_wit
 {
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 126;
@@ -265,7 +265,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_wit
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
     initiatingCANMessage.data[0] = 0;
@@ -275,7 +275,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_wit
     initiatingCANMessage.data[4] = 0;
     initiatingCANMessage.data[5] = 0;
 
-    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     expectedCANMessage.rtr = 0;
     expectedCANMessage.dlc = 3;
 
@@ -294,7 +294,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 0; i < 16; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 1;
         initiatingCANMessage.dlc = 0;
 
@@ -309,7 +309,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_chang
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -365,7 +365,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_chang
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (2 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (2 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -421,7 +421,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_chang
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (4 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (4 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -477,7 +477,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_chan
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -533,7 +533,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_chan
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (3 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (3 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -589,7 +589,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_chan
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (5 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -646,7 +646,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_with_
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 0; i < 6; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 0;
         initiatingCANMessage.dlc = 0;
 
@@ -662,7 +662,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_d
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 6; i < 16; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 0;
         initiatingCANMessage.dlc = 8;
         initiatingCANMessage.data[0] = 16;
@@ -707,7 +707,7 @@ TEST(diypinball_rgbFeatureHandler_test_other, message_to_function_1_to_incomplet
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (5 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 16;
@@ -755,7 +755,7 @@ TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_lo
 {
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 16;
