@@ -12,7 +12,7 @@ static void sendRGBStatus(diypinball_rgbFeatureHandlerInstance_t *instance, diyp
 
     response.priority = message->priority;
     response.unitSpecific = 0x01;
-    response.featureType = 0x04;
+    response.featureType = 0x05;
     response.featureNum = rgbNum;
     response.function = 0x00;
     response.reserved = 0x00;
@@ -96,7 +96,7 @@ void diypinball_rgbFeatureHandler_init(diypinball_rgbFeatureHandlerInstance_t *i
     }
 
     instance->featureHandlerInstance.concreteFeatureHandlerInstance = (void*) instance;
-    instance->featureHandlerInstance.featureType = 4; // FIXME constant
+    instance->featureHandlerInstance.featureType = 5; // FIXME constant
     instance->featureHandlerInstance.messageHandler = diypinball_rgbFeatureHandler_messageReceivedHandler;
     instance->featureHandlerInstance.tickHandler = diypinball_rgbFeatureHandler_millisecondTickHandler;
     instance->featureHandlerInstance.routerInstance = init->routerInstance;
