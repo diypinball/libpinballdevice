@@ -24,9 +24,9 @@ typedef enum diypinball_switchMatrixScanner_interruptType {
 typedef void (*diypinball_switchMatrixScannerSwitchStateHandler)(uint8_t switchNum, uint8_t state);
 
 /*
- * \brief Function pointer to a set column handler, whose implementation is platform-specific
+ * \brief Function pointer to a set column handler, whose implementation is platform-specific. -1 deasserts all columns.
  */
-typedef void (*diypinball_switchMatrixScannerSetColumnHandler)(uint8_t colNum);
+typedef void (*diypinball_switchMatrixScannerSetColumnHandler)(int8_t colNum);
 
 /*
  * \brief Function pointer to a read row handler, whose implementation is platform-specific
@@ -38,11 +38,10 @@ typedef void (*diypinball_switchMatrixScannerReadRowHandler)(uint8_t *row);
  * \brief Stores information related to an individual switch in the matrix
  */
 typedef struct diypinball_switchMatrixStatus {
-    volatile uint8_t switchState                                            /**< The previous state of the switch */
-    volatile uint8_t switchChanged;                                         /**< Did the switch just change? */
-    volatile uint32_t lastTick;                                             /**< Last timer tick where a change occured*/
-    volatile uint8_t debounceLimit;                                         /**< Debounce limit parameter */
-} diypinball_switchMatriStatus_t;
+    uint8_t switchState;                                                    /**< The previous state of the switch */
+    uint32_t lastTick;                                                      /**< Last timer tick where a change occured*/
+    uint8_t debounceLimit;                                                  /**< Debounce limit parameter */
+} diypinball_switchMatrixStatus_t;
 
 /*
  * \struct diypinball_switchMatrixScannerInstance_t diypinball_switchMatrixScannerInstance
@@ -50,12 +49,12 @@ typedef struct diypinball_switchMatrixStatus {
  */
 typedef struct diypinball_switchMatrixScannerInstance {
     diypinball_switchMatrixStatus_t switches[16];                           /**< Array of switch status objects */
-    volatile uint8_t numColumns;                                            /**< The number of columns to be scanned */
-    volatile uint8_t currentColumn;                                         /**< The current column being scanned */
-    volatile uint32_t currentTick;                                          /**< Most recent tick number */
+    uint8_t numColumns;                                                     /**< The number of columns to be scanned */
+    uint8_t currentColumn;                                                  /**< The current column being scanned */
+    uint32_t lastTick;                                                   /**< Most recent tick number */
     diypinball_switchMatrixScannerSwitchStateHandler switchStateHandler;    /**< Function pointer to the switch state handler */
     diypinball_switchMatrixScannerSetColumnHandler setColumnHandler;        /**< Function pointer to the set column handler */
-    diypinball_switchMatrixScannerReadRowHandler readRowHandler             /**< Function pointer to the read row handler */
+    diypinball_switchMatrixScannerReadRowHandler readRowHandler;            /**< Function pointer to the read row handler */
 } diypinball_switchMatrixScannerInstance_t;
 
 /*
@@ -66,7 +65,7 @@ typedef struct diypinball_switchMatrixScannerInit {
     uint8_t numColumns;                                                     /**< The number of columns to be scanned */
     diypinball_switchMatrixScannerSwitchStateHandler switchStateHandler;    /**< Function pointer to the switch state handler */
     diypinball_switchMatrixScannerSetColumnHandler setColumnHandler;        /**< Function pointer to the set column handler */
-    diypinball_switchMatrixScannerReadRowHandler readRowHandler             /**< Function pointer to the read row handler */
+    diypinball_switchMatrixScannerReadRowHandler readRowHandler;            /**< Function pointer to the read row handler */
 } diypinball_switchMatrixScannerInit_t;
 
 /**
@@ -87,7 +86,7 @@ void diypinball_switchMatrixScanner_init(diypinball_switchMatrixScannerInstance_
  *
  * \return Nothing
  */
-void diypinball_switchMatrixScanner_millisecondTickHandler(void *instance, uint32_t tickNum);
+void diypinball_switchMatrixScanner_millisecondTickHandler(diypinball_switchMatrixScannerInstance_t *instance, uint32_t tickNum);
 
 /**
  * \brief Deinitialize the SwitchMatrixScanner feature
