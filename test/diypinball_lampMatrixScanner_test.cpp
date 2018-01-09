@@ -176,3 +176,10 @@ TEST_F(diypinball_lampMatrixScanner_test, set_lamp_state_invalid)
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.numStates);
     }
 }
+
+TEST_F(diypinball_lampMatrixScanner_test, set_tick)
+{
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 4242);
+
+    ASSERT_EQ(4242, lampMatrixScanner.lastTick);
+}
