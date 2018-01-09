@@ -10,7 +10,7 @@ extern "C" {
 #include <stdint.h>
 
 /*
- * \brief Pinball message type
+ * \brief Interrupt type
  */
 typedef enum diypinball_lampMatrixScanner_interruptType {
     INTERRUPT_RESET,                            /**< Timer rollover */
@@ -25,7 +25,7 @@ typedef void (*diypinball_lampMatrixScannerSetColumnHandler)(int8_t colNum);
 /*
  * \brief Function pointer to a set row handler, whose implementation is platform-specific
  */
-typedef void (*diypinball_lampMatrixScannerSetRowHandler)(uint8_t row, uint8_t value);
+typedef void (*diypinball_lampMatrixScannerSetRowHandler)(uint8_t row0val, uint8_t row1val, uint8_t row2val, uint8_t row3val);
 
 /*
  * \struct diypinball_lampMatrixState_t diypinball_lampMatrixState
@@ -96,9 +96,9 @@ void diypinball_lampMatrixScanner_deinit(diypinball_lampMatrixScannerInstance_t 
  * \param[in] lampNum                   Which lamp is being changed
  * \param[in] state                     The new state for the lamp
  *
- * \return Switch state (1 = closed, 0 = open)
+ * \return Nothing
  */
-uint8_t diypinball_lampMatrixScanner_setLampState(diypinball_lampMatrixScannerInstance_t *instance, uint8_t lampNum, diypinball_lampStatus_t *state);
+void diypinball_lampMatrixScanner_setLampState(diypinball_lampMatrixScannerInstance_t *instance, uint8_t lampNum, diypinball_lampStatus_t *state);
 
 /**
  * \brief Pass an interrupt to the LampMatrixScanner
