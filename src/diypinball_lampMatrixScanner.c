@@ -2,6 +2,33 @@
 #include "diypinball_lampMatrixScanner.h"
 #include "diypinball_featureRouter.h"
 
+static void setRowValues(diypinball_lampMatrixScannerInstance_t *instance) {
+    uint8_t rowValues[4];
+    uint8_t i;
+    uint8_t j;
+
+    j = instance->currentColumn * 4;
+
+    for(i=0; i<4; i++) {
+        switch(instance->lamps[i+j].currentPhase) {
+            case 0:
+                rowValues[i] = instance->lamps[i+j].lampState.state1;
+                break;
+            case 1:
+                rowValues[i] = instance->lamps[i+j].lampState.state2;
+                break;
+            case 2:
+                rowValues[i] = instance->lamps[i+j].lampState.state3;
+                break;
+            default:
+                rowValues[i] = 0;
+                break;
+        }
+    }
+
+    instance->setRowHandler(rowValues[0], rowValues[1], rowValues[2], rowValues[3]);
+}
+
 void diypinball_lampMatrixScanner_init(diypinball_lampMatrixScannerInstance_t *instance, diypinball_lampMatrixScannerInit_t *init) {
     instance->numColumns = init->numColumns;
     if(instance->numColumns > 4) instance->numColumns = 4;
@@ -68,9 +95,17 @@ void diypinball_lampMatrixScanner_setLampState(diypinball_lampMatrixScannerInsta
 }
 
 void diypinball_lampMatrixScanner_isr(diypinball_lampMatrixScannerInstance_t *instance, diypinball_lampMatrixScanner_interruptType_t interruptType) {
-    if(interruptType == INTERRUPT_RESET) {
-
-    } else if(interruptType == INTERRUPT_MATCH) {
-
+    if(interruptType == LAMP_INTERRUPT_RESET) {
+        // clear the columns and rows
+        instance->setColumnHandler(-1);
+        instance->setRowHandler(0, 0, 0, 0);
+    } else if(interruptType == LAMP_INTERRUPT_MATCH) {
+        instance->setColumnHandler(instance->currentColumn);
+        setRowValues(instance);
+        // increment the current column
+        instance->currentColumn = instance->currentColumn + 1;
+        if(instance->currentColumn >= instance->numColumns) {
+            instance->currentColumn = 0;
+        }
     }
 }

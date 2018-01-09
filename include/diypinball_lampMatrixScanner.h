@@ -13,8 +13,8 @@ extern "C" {
  * \brief Interrupt type
  */
 typedef enum diypinball_lampMatrixScanner_interruptType {
-    INTERRUPT_RESET,                            /**< Timer rollover */
-    INTERRUPT_MATCH,                            /**< Timer match */
+    LAMP_INTERRUPT_RESET,                               /**< Timer rollover */
+    LAMP_INTERRUPT_MATCH,                               /**< Timer match */
 } diypinball_lampMatrixScanner_interruptType_t;
 
 /*

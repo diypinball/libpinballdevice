@@ -183,3 +183,21 @@ TEST_F(diypinball_lampMatrixScanner_test, set_tick)
 
     ASSERT_EQ(4242, lampMatrixScanner.lastTick);
 }
+
+TEST_F(diypinball_lampMatrixScanner_test, isr_flow) {
+    ASSERT_EQ(0, lampMatrixScanner.currentColumn);
+
+    uint8_t i;
+
+    for(i = 0; i <= 8; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
