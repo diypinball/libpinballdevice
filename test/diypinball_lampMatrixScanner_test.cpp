@@ -201,3 +201,801 @@ TEST_F(diypinball_lampMatrixScanner_test, isr_flow) {
         diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
     }
 }
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_one_state) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 0;
+    state.state2 = 0;
+    state.state2Duration = 0;
+    state.state3 = 0;
+    state.state3Duration = 0;
+    state.numStates = 1;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 101);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_one_state_with_duration) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 10;
+    state.state2 = 0;
+    state.state2Duration = 0;
+    state.state3 = 0;
+    state.state3Duration = 0;
+    state.numStates = 1;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 101);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_two_states) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 10;
+    state.state2 = 127;
+    state.state2Duration = 10;
+    state.state3 = 0;
+    state.state3Duration = 0;
+    state.numStates = 2;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 99);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 199);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 200);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_two_states_last_infinite) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 10;
+    state.state2 = 127;
+    state.state2Duration = 0;
+    state.state3 = 0;
+    state.state3Duration = 0;
+    state.numStates = 2;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 99);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 199);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 200);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_three_states) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 10;
+    state.state2 = 127;
+    state.state2Duration = 10;
+    state.state3 = 64;
+    state.state3Duration = 11;
+    state.numStates = 3;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 99);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 199);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 200);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(64, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 309);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(64, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+    
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 310);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}
+
+TEST_F(diypinball_lampMatrixScanner_test, blink_test_three_states_last_infinite) {
+    diypinball_lampStatus_t state;
+    uint8_t i;
+
+    state.state1 = 255;
+    state.state1Duration = 10;
+    state.state2 = 127;
+    state.state2Duration = 10;
+    state.state3 = 64;
+    state.state3Duration = 0;
+    state.numStates = 3;
+
+    diypinball_lampMatrixScanner_setLampState(&lampMatrixScanner, 0, &state);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 99);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(255, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 100);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 199);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(127, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 200);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(64, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 309);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(64, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+    
+    diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 310);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(0)).Times(1);
+    EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(64, _, _, _)).Times(1);
+
+    diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+
+    for(i = 1; i < 4; i++) {
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(-1)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(0, 0, 0, 0)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_RESET);
+
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetColumnHandler(i % 4)).Times(1);
+        EXPECT_CALL(myLampMatrixScannerHandlers, testSetRowHandler(_, _, _, _)).Times(1);
+
+        diypinball_lampMatrixScanner_isr(&lampMatrixScanner, LAMP_INTERRUPT_MATCH);
+    }
+}

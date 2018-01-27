@@ -54,6 +54,54 @@ void diypinball_lampMatrixScanner_init(diypinball_lampMatrixScannerInstance_t *i
 
 void diypinball_lampMatrixScanner_millisecondTickHandler(diypinball_lampMatrixScannerInstance_t *instance, uint32_t tickNum) {
     instance->lastTick = tickNum;
+
+    uint8_t i;
+    uint32_t timerCompare;
+    uint8_t newPhase;
+
+    for(i=0; i<16; i++) {
+        if(instance->lamps[i].lampState.numStates > 1) {
+            switch(instance->lamps[i].currentPhase) {
+                case 0:
+                    timerCompare = instance->lamps[i].lampState.state1Duration * 10;
+                    if(instance->lamps[i].lampState.numStates > 1) {
+                        newPhase = 1;
+                    } else {
+                        newPhase = 0;
+                    }
+                    break;
+                case 1:
+                    timerCompare = instance->lamps[i].lampState.state2Duration * 10;
+                    if(instance->lamps[i].lampState.numStates > 2) {
+                        newPhase = 2;
+                    } else {
+                        newPhase = 0;
+                    }
+                    break;
+                case 2:
+                    timerCompare = instance->lamps[i].lampState.state3Duration * 10;
+                    newPhase = 0;
+                    break;
+                default:
+                    timerCompare = tickNum;
+                    newPhase = 0;
+                    break;
+            }
+            if((timerCompare > 0) && ((tickNum - instance->lamps[i].lastTick) >= timerCompare)) {
+                // non-zero threshold means we can advance to the next phase. zero means stay in that phase forever.
+                instance->lamps[i].currentPhase = newPhase;
+                instance->lamps[i].lastTick = tickNum;
+            }
+        } else if(instance->lamps[i].lampState.numStates == 1) {
+            // Stay in phase 0
+            instance->lamps[i].currentPhase = 0;
+            instance->lamps[i].lastTick = tickNum;
+        } else {
+            // Stay in phase 0
+            instance->lamps[i].currentPhase = 0;
+            instance->lamps[i].lastTick = tickNum;
+        }
+    }
 }
 
 void diypinball_lampMatrixScanner_deinit(diypinball_lampMatrixScannerInstance_t *instance) {
