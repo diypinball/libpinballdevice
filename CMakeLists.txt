@@ -65,6 +65,9 @@ else()
             ${GMOCK_LIBS_DIR}/libgmock.a
             ${GMOCK_LIBS_DIR}/libgmock_main.a
             )
+        if(NOT MINGW)
+            target_link_libraries(Coverage gcov)
+        endif()
     else()
         target_link_libraries(${PROJECT_TEST_NAME}
             debug ${GTEST_LIBS_DIR}/DebugLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest${CMAKE_FIND_LIBRARY_SUFFIXES}
