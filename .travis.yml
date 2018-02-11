@@ -48,7 +48,7 @@ script:
     - cd ..
 
 after_success:
-  - coveralls --root .. -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*"
+  - coveralls --root .. -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*" -E ".*test/.*.h.*"
 
 notifications:
     on_success: change
