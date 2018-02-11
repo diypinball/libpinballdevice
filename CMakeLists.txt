@@ -66,7 +66,7 @@ else()
             ${GMOCK_LIBS_DIR}/libgmock_main.a
             )
         if(NOT MINGW)
-            target_link_libraries(Coverage gcov)
+            target_link_libraries(${PROJECT_TEST_NAME} gcov)
         endif()
     else()
         target_link_libraries(${PROJECT_TEST_NAME}
