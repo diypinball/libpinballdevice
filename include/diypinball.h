@@ -5,6 +5,7 @@ extern "C" {
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 /*
  * \struct diypinball_canMessage
