@@ -33,8 +33,6 @@ extern "C" {
 }
 
 MATCHER_P(LampStatusEqual, status, "") {
-    //printf("Arg: %d, %d, %d, %d, %d, %d, %d\n", arg.state1, arg.state1Duration, arg.state2, arg.state2Duration, arg.state3, arg.state3Duration, arg.numStates);
-    //printf("Sta: %d, %d, %d, %d, %d, %d, %d\n", status.state1, status.state1Duration, status.state2, status.state2Duration, status.state3, status.state3Duration, status.numStates);
     uint8_t fieldFlag = (arg.state1 == status.state1) &&
         (arg.state1Duration == status.state1Duration) &&
         (arg.state2 == status.state2) &&
@@ -46,25 +44,37 @@ MATCHER_P(LampStatusEqual, status, "") {
     return !(!fieldFlag);
 }
 
-TEST(diypinball_lampFeatureHandler_test, init_zeros_structure)
-{
+class diypinball_lampFeatureHandler_test : public testing::Test {
+    protected: 
+
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
+
+        diypinball_featureRouterInit_t routerInit;
+
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
+
+        lampFeatureHandlerInit.numLamps = 15;
+        lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
+        lampFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
+    }
+
     diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
     diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
+};
 
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
+TEST_F(diypinball_lampFeatureHandler_test, init_zeros_structure)
+{
     ASSERT_EQ(2, lampFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
@@ -79,31 +89,14 @@ TEST(diypinball_lampFeatureHandler_test, init_zeros_structure)
 
     ASSERT_EQ(&router, lampFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(&lampFeatureHandler, lampFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
-    ASSERT_EQ(16, lampFeatureHandler.numLamps);
+    ASSERT_EQ(15, lampFeatureHandler.numLamps);
     ASSERT_TRUE(testLampChangedHandler == lampFeatureHandler.lampChangedHandler);
     ASSERT_TRUE(diypinball_lampFeatureHandler_millisecondTickHandler == lampFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_lampFeatureHandler_messageReceivedHandler == lampFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_lampFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_lampFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_lampFeatureHandler_deinit(&lampFeatureHandler);
 
     ASSERT_EQ(0, lampFeatureHandler.featureHandlerInstance.featureType);
@@ -126,7 +119,7 @@ TEST(diypinball_lampFeatureHandler_test, deinit_zeros_structure)
     ASSERT_TRUE(NULL == lampFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_lampFeatureHandler_test, init_too_many_lamps)
+TEST(diypinball_lampFeatureHandler_test_other, init_too_many_lamps)
 {
     diypinball_featureRouterInstance_t router;
     diypinball_featureRouterInit_t routerInit;
@@ -165,30 +158,8 @@ TEST(diypinball_lampFeatureHandler_test, init_too_many_lamps)
     ASSERT_TRUE(diypinball_lampFeatureHandler_messageReceivedHandler == lampFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_lampFeatureHandler_test, request_to_function_0_to_invalid_lamp_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, request_to_function_0_to_invalid_lamp_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (15 << 8) | (0 << 4) | 0;
@@ -201,30 +172,8 @@ TEST(diypinball_lampFeatureHandler_test, request_to_function_0_to_invalid_lamp_d
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, request_to_function_0_to_valid_lamp_returns_lamp_state)
+TEST_F(diypinball_lampFeatureHandler_test, request_to_function_0_to_valid_lamp_returns_lamp_state)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -243,30 +192,8 @@ TEST(diypinball_lampFeatureHandler_test, request_to_function_0_to_valid_lamp_ret
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_invalid_lamp_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_invalid_lamp_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (15 << 8) | (0 << 4) | 0;
@@ -280,30 +207,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_invalid_lamp_d
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_and_no_data_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_and_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -317,30 +222,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_and
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_only_brightness_sets_lamp)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_only_brightness_sets_lamp)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -363,30 +246,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_brightness_and_duration_sets_lamp)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_brightness_and_duration_sets_lamp)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -410,30 +271,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_one_and_a_half_state_sets_lamp_solid)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_one_and_a_half_state_sets_lamp_solid)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -458,30 +297,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_two_states_sets_lamp_blinking)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_two_states_sets_lamp_blinking)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -507,30 +324,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_two_and_a_half_states_sets_lamp_blinking)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_two_and_a_half_states_sets_lamp_blinking)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -557,30 +352,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_three_states_sets_lamp_blinking)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_three_states_sets_lamp_blinking)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -608,30 +381,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_three_states_and_read_back)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_with_three_states_and_read_back)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (0 << 4) | 0;
@@ -685,30 +436,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_0_to_valid_lamp_wit
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 15;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 0; i < 16; i++) {
@@ -723,30 +452,8 @@ TEST(diypinball_lampFeatureHandler_test, request_to_function_1_to_any_set_does_n
     }
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_changes_lamps)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_changes_lamps)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -833,30 +540,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_change
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_high_set_changes_lamps)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_1_to_high_set_changes_lamps)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (1 << 8) | (1 << 4) | 0;
@@ -943,30 +628,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_high_set_chang
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_with_no_data_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -979,30 +642,8 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_low_set_with_n
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_invalid_set_does_nothing)
+TEST_F(diypinball_lampFeatureHandler_test, message_to_function_1_to_invalid_set_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockLampFeatureHandlerHandlers myLampFeatureHandlerHandlers;
-    LampFeatureHandlerHandlersImpl = &myLampFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_lampFeatureHandlerInstance_t lampFeatureHandler;
-    diypinball_lampFeatureHandlerInit_t lampFeatureHandlerInit;
-
-    lampFeatureHandlerInit.numLamps = 16;
-    lampFeatureHandlerInit.lampChangedHandler = testLampChangedHandler;
-    lampFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_lampFeatureHandler_init(&lampFeatureHandler, &lampFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 2; i < 16; i++) {
@@ -1025,7 +666,7 @@ TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_invalid_set_do
     }
 }
 
-TEST(diypinball_lampFeatureHandler_test, message_to_function_1_to_incomplete_high_set_changes_lamps)
+TEST(diypinball_lampFeatureHandler_test_other, message_to_function_1_to_incomplete_high_set_changes_lamps)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;

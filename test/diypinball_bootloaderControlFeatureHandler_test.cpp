@@ -32,27 +32,39 @@ extern "C" {
     }
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, init_zeros_structure)
-{
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
+class diypinball_bootloaderControlFeatureHandler_test : public testing::Test {
+    protected: 
 
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
 
-    diypinball_featureRouter_init(&router, &routerInit);
+        diypinball_featureRouterInit_t routerInit;
 
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
+
+        bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
+        bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
+        bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
+        bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
+        bootloaderControlFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
+    }
+
+    diypinball_featureRouterInstance_t router;
     diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockBootloaderControlHandlers myBootloaderControlHandlers;
+};
 
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, init_zeros_structure)
+{
     ASSERT_EQ(6, bootloaderControlFeatureHandler.featureHandlerInstance.featureType);
     ASSERT_EQ(1, bootloaderControlFeatureHandler.bootloaderVersionMajor);
     ASSERT_EQ(2, bootloaderControlFeatureHandler.bootloaderVersionMinor);
@@ -64,32 +76,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, init_zeros_structure)
     ASSERT_TRUE(diypinball_bootloaderControlFeatureHandler_messageReceivedHandler == bootloaderControlFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_0_sends_id_response)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, request_to_function_0_sends_id_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -109,32 +97,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_0_send
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_0_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, message_to_function_0_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -148,32 +112,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_0_does
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_1_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, request_to_function_1_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -186,32 +126,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_1_does
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_no_data_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_no_data_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -225,32 +141,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_wrong_data_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_wrong_data_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -264,32 +156,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_right_data_reboots)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with_right_data_reboots)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (6 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -303,32 +171,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_1_with
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_2_through_15_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, request_to_function_2_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 2; i < 16; i++) {
@@ -344,32 +188,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, request_to_function_2_thro
     }
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_2_through_15_does_nothing)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, message_to_function_2_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 2; i < 16; i++) {
@@ -385,32 +205,8 @@ TEST(diypinball_bootloaderControlFeatureHandler_test, message_to_function_2_thro
     }
 }
 
-TEST(diypinball_bootloaderControlFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_bootloaderControlFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockBootloaderControlHandlers myBootloaderControlHandlers;
-    BootloaderControlHandlersImpl = &myBootloaderControlHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_bootloaderControlFeatureHandlerInstance bootloaderControlFeatureHandler;
-    diypinball_bootloaderControlFeatureHandlerInit bootloaderControlFeatureHandlerInit;
-
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMajor = 1;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionMinor = 2;
-    bootloaderControlFeatureHandlerInit.bootloaderVersionPatch = 3;
-    bootloaderControlFeatureHandlerInit.rebootHandler = testRebootHandler;
-    bootloaderControlFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_bootloaderControlFeatureHandler_init(&bootloaderControlFeatureHandler, &bootloaderControlFeatureHandlerInit);
-
     diypinball_bootloaderControlFeatureHandler_deinit(&bootloaderControlFeatureHandler);
 
     ASSERT_EQ(0, bootloaderControlFeatureHandler.bootloaderVersionMajor);

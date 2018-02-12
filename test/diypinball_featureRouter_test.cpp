@@ -44,193 +44,163 @@ extern "C" {
     }
 }
 
-TEST(diypinball_featureRouter_test, init_zeros_structure)
-{
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
+class diypinball_featureRouter_test : public testing::Test {
+    protected: 
 
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        Handler1 = &myHandler1;
+        Handler2 = &myHandler2;
 
-    diypinball_featureRouter_init(&instance, &init);
+        diypinball_featureRouterInit_t routerInit;
 
-    for(uint8_t i=0; i<16; i++) {
-        ASSERT_EQ(NULL, instance.features[i]);
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
     }
 
-    ASSERT_EQ(instance.boardAddress, init.boardAddress);
-    ASSERT_TRUE(instance.canSendHandler == testCanSendHandler);
+    diypinball_featureRouterInstance_t router;
+    MockCANSend myCANSend;
+    MockHandlers myHandler1, myHandler2;
+};
+
+TEST_F(diypinball_featureRouter_test, init_zeros_structure)
+{
+    for(uint8_t i=0; i<16; i++) {
+        ASSERT_EQ(NULL, router.features[i]);
+    }
+
+    ASSERT_EQ(router.boardAddress, 42);
+    ASSERT_TRUE(router.canSendHandler == testCanSendHandler);
 }
 
-TEST(diypinball_featureRouter_test, addfeature_adds_feature) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, addfeature_adds_feature) {
     diypinball_featureHandlerInstance feature;
     feature.featureType = 1;
-    feature.routerInstance = &instance;
+    feature.routerInstance = &router;
     feature.messageHandler = messageReceivedHandler1;
     feature.tickHandler = millisecondTickHandler1;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     for(uint8_t i=0; i<16; i++) {
         if(i == 1) break;
-        ASSERT_EQ(NULL, instance.features[i]);
+        ASSERT_EQ(NULL, router.features[i]);
     }
 
-    ASSERT_EQ((instance.features[1])->featureType, feature.featureType);
-    ASSERT_TRUE((instance.features[1])->messageHandler == messageReceivedHandler1);
-    ASSERT_TRUE((instance.features[1])->tickHandler == millisecondTickHandler1);
+    ASSERT_EQ((router.features[1])->featureType, feature.featureType);
+    ASSERT_TRUE((router.features[1])->messageHandler == messageReceivedHandler1);
+    ASSERT_TRUE((router.features[1])->tickHandler == millisecondTickHandler1);
 }
 
-TEST(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, deinit_zeros_structure_and_functions) {
     diypinball_featureHandlerInstance feature;
     feature.featureType = 1;
-    feature.routerInstance = &instance;
+    feature.routerInstance = &router;
     feature.messageHandler = messageReceivedHandler1;
     feature.tickHandler = millisecondTickHandler1;
 
-    diypinball_featureRouter_addFeature(&instance, &feature);
+    diypinball_featureRouter_addFeature(&router, &feature);
 
-    diypinball_featureRouter_deinit(&instance);
+    diypinball_featureRouter_deinit(&router);
 
     for(uint8_t i=0; i<16; i++) {
-        ASSERT_EQ(NULL, instance.features[i]);
+        ASSERT_EQ(NULL, router.features[i]);
     }
 
-    ASSERT_EQ(instance.boardAddress, 0);
-    ASSERT_EQ(NULL, instance.canSendHandler);
+    ASSERT_EQ(router.boardAddress, 0);
+    ASSERT_EQ(NULL, router.canSendHandler);
 }
 
-TEST(diypinball_featureRouter_test, addfeature_with_invalid_featureType_adds_nothing) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, addfeature_with_invalid_featureType_adds_nothing) {
     diypinball_featureHandlerInstance feature;
     feature.featureType = 17;
-    feature.routerInstance = &instance;
+    feature.routerInstance = &router;
     feature.messageHandler = messageReceivedHandler1;
     feature.tickHandler = millisecondTickHandler1;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature);
     ASSERT_EQ(RESULT_FAIL_INVALID_PARAMETER, featureResult);
 
     for(uint8_t i=0; i<16; i++) {
-        ASSERT_EQ(NULL, instance.features[i]);
+        ASSERT_EQ(NULL, router.features[i]);
     }
 }
 
-TEST(diypinball_featureRouter_test, addfeature_adds_2_features) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, addfeature_adds_2_features) {
     uint32_t dummyContext1, dummyContext2;
 
     diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
     feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
-    feature1.routerInstance = &instance;
+    feature1.routerInstance = &router;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
     diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
     feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
-    feature2.routerInstance = &instance;
+    feature2.routerInstance = &router;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature1);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature2);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     for(uint8_t i=0; i<16; i++) {
         if((i == 1) || (i == 2)) break;
-        ASSERT_EQ(NULL, instance.features[i]);
+        ASSERT_EQ(NULL, router.features[i]);
     }
 
-    ASSERT_EQ((instance.features[1])->featureType, feature1.featureType);
-    ASSERT_TRUE((instance.features[1])->messageHandler == messageReceivedHandler1);
-    ASSERT_TRUE((instance.features[1])->tickHandler == millisecondTickHandler1);
-    ASSERT_EQ(&dummyContext1, (instance.features[1])->concreteFeatureHandlerInstance);
+    ASSERT_EQ((router.features[1])->featureType, feature1.featureType);
+    ASSERT_TRUE((router.features[1])->messageHandler == messageReceivedHandler1);
+    ASSERT_TRUE((router.features[1])->tickHandler == millisecondTickHandler1);
+    ASSERT_EQ(&dummyContext1, (router.features[1])->concreteFeatureHandlerInstance);
 
-    ASSERT_EQ((instance.features[2])->featureType, feature2.featureType);
-    ASSERT_TRUE((instance.features[2])->messageHandler == messageReceivedHandler2);
-    ASSERT_TRUE((instance.features[2])->tickHandler == millisecondTickHandler2);
-    ASSERT_EQ(&dummyContext2, (instance.features[2])->concreteFeatureHandlerInstance);
+    ASSERT_EQ((router.features[2])->featureType, feature2.featureType);
+    ASSERT_TRUE((router.features[2])->messageHandler == messageReceivedHandler2);
+    ASSERT_TRUE((router.features[2])->tickHandler == millisecondTickHandler2);
+    ASSERT_EQ(&dummyContext2, (router.features[2])->concreteFeatureHandlerInstance);
 }
 
-TEST(diypinball_featureRouter_test, two_features_incoming_can_message_routed_properly_and_decoded) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-    MockHandlers myHandler1, myHandler2;
-    Handler1 = &myHandler1;
-    Handler2 = &myHandler2;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, two_features_incoming_can_message_routed_properly_and_decoded) {
     uint32_t dummyContext1, dummyContext2;
 
     diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
     feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
-    feature1.routerInstance = &instance;
+    feature1.routerInstance = &router;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
     diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
     feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
-    feature2.routerInstance = &instance;
+    feature2.routerInstance = &router;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature1);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature2);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     diypinball_canMessage_t message;
-    message.id = (3 << 25) | (1 << 24) | (init.boardAddress << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
+    message.id = (3 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
     message.rtr = 0;
     message.dlc = 8;
     message.data[0] = 255;
@@ -264,50 +234,39 @@ TEST(diypinball_featureRouter_test, two_features_incoming_can_message_routed_pro
     EXPECT_CALL(myHandler1, testMessageReceivedHandler(_, _)).Times(0);
     EXPECT_CALL(myHandler2, testMessageReceivedHandler(_, PinballMessageEqual(pinballMessage))).Times(1);
 
-    diypinball_featureRouter_receiveCAN(&instance, &message);
+    diypinball_featureRouter_receiveCAN(&router, &message);
 
     Handler1 = NULL;
     Handler2 = NULL;
 }
 
-TEST(diypinball_featureRouter_test, two_features_incoming_can_message_with_bad_feature_not_routed) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-    MockHandlers myHandler1, myHandler2;
-    Handler1 = &myHandler1;
-    Handler2 = &myHandler2;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, two_features_incoming_can_message_with_bad_feature_not_routed) {
     uint32_t dummyContext1, dummyContext2;
 
     diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
     feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
-    feature1.routerInstance = &instance;
+    feature1.routerInstance = &router;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
     diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
     feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
-    feature2.routerInstance = &instance;
+    feature2.routerInstance = &router;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature1);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature2);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     diypinball_canMessage_t message;
-    message.id = (init.boardAddress << 16) | (8 << 12);
+    message.id = (42 << 16) | (8 << 12);
     message.rtr = 0;
     message.dlc = 8;
     message.data[0] = 255;
@@ -322,107 +281,77 @@ TEST(diypinball_featureRouter_test, two_features_incoming_can_message_with_bad_f
     EXPECT_CALL(myHandler1, testMessageReceivedHandler(_, _)).Times(0);
     EXPECT_CALL(myHandler2, testMessageReceivedHandler(_, _)).Times(0);
 
-    diypinball_featureRouter_receiveCAN(&instance, &message);
+    diypinball_featureRouter_receiveCAN(&router, &message);
 
     Handler1 = NULL;
     Handler2 = NULL;
 }
 
-TEST(diypinball_featureRouter_test, two_features_bitmap) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, two_features_bitmap) {
     uint32_t dummyContext1, dummyContext2;
 
     diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
     feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
-    feature1.routerInstance = &instance;
+    feature1.routerInstance = &router;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
     diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
     feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
-    feature2.routerInstance = &instance;
+    feature2.routerInstance = &router;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature1);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature2);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     uint16_t featureBitmap;
-    diypinball_featureRouter_getFeatureBitmap(&instance, &featureBitmap);
+    diypinball_featureRouter_getFeatureBitmap(&router, &featureBitmap);
     ASSERT_EQ(0b0000000000000110, featureBitmap);
 }
 
-TEST(diypinball_featureRouter_test, two_features_millisecond_tick) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-    MockHandlers myHandler1, myHandler2;
-    Handler1 = &myHandler1;
-    Handler2 = &myHandler2;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, two_features_millisecond_tick) {
     uint32_t dummyContext1, dummyContext2;
 
     diypinball_featureHandlerInstance feature1;
     feature1.featureType = 1;
     feature1.concreteFeatureHandlerInstance = (void*) &dummyContext1;
-    feature1.routerInstance = &instance;
+    feature1.routerInstance = &router;
     feature1.messageHandler = messageReceivedHandler1;
     feature1.tickHandler = millisecondTickHandler1;
 
     diypinball_featureHandlerInstance feature2;
     feature2.featureType = 2;
     feature2.concreteFeatureHandlerInstance = (void*) &dummyContext2;
-    feature2.routerInstance = &instance;
+    feature2.routerInstance = &router;
     feature2.messageHandler = messageReceivedHandler2;
     feature2.tickHandler = millisecondTickHandler2;
 
     diypinball_result_t featureResult;
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature1);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature1);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
-    featureResult = diypinball_featureRouter_addFeature(&instance, &feature2);
+    featureResult = diypinball_featureRouter_addFeature(&router, &feature2);
     ASSERT_EQ(RESULT_SUCCESS, featureResult);
 
     EXPECT_CALL(myHandler1, testMillisecondReceivedHandler((void*)&dummyContext1, 2)).Times(1);
     EXPECT_CALL(myHandler2, testMillisecondReceivedHandler((void*)&dummyContext2, 2)).Times(1);
 
-    diypinball_featureRouter_millisecondTick(&instance, 2);
+    diypinball_featureRouter_millisecondTick(&router, 2);
 
     Handler1 = NULL;
     Handler2 = NULL;
 }
 
-TEST(diypinball_featureRouter_test, send_message_response) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, send_message_response) {
     diypinball_pinballMessage_t pinballMessage;
     pinballMessage.priority = 3;
     pinballMessage.unitSpecific = 1;
@@ -443,7 +372,7 @@ TEST(diypinball_featureRouter_test, send_message_response) {
     pinballMessage.data[7] = 1;
 
     diypinball_canMessage_t expectedCANMessage;
-    expectedCANMessage.id = (3 << 25) | (1 << 24) | (init.boardAddress << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
+    expectedCANMessage.id = (3 << 25) | (1 << 24) | (42 << 16) | (2 << 12) | (5 << 8) | (6 << 4) | 0;
     expectedCANMessage.rtr = 0;
     expectedCANMessage.dlc = 8;
     expectedCANMessage.data[0] = 255;
@@ -457,21 +386,10 @@ TEST(diypinball_featureRouter_test, send_message_response) {
 
     EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
 
-    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
+    diypinball_featureRouter_sendPinballMessage(&router, &pinballMessage);
 }
 
-TEST(diypinball_featureRouter_test, send_message_command) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, send_message_command) {
     diypinball_pinballMessage_t pinballMessage;
     pinballMessage.priority = 3;
     pinballMessage.unitSpecific = 1;
@@ -506,21 +424,10 @@ TEST(diypinball_featureRouter_test, send_message_command) {
 
     EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
 
-    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
+    diypinball_featureRouter_sendPinballMessage(&router, &pinballMessage);
 }
 
-TEST(diypinball_featureRouter_test, send_message_request) {
-    diypinball_featureRouterInstance instance;
-    diypinball_featureRouterInit init;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    init.boardAddress = 42;
-    init.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&instance, &init);
-
+TEST_F(diypinball_featureRouter_test, send_message_request) {
     diypinball_pinballMessage_t pinballMessage;
     pinballMessage.priority = 3;
     pinballMessage.unitSpecific = 1;
@@ -555,5 +462,5 @@ TEST(diypinball_featureRouter_test, send_message_request) {
 
     EXPECT_CALL(myCANSend, testCanSendHandler(CanMessageEqual(expectedCANMessage))).Times(1);
 
-    diypinball_featureRouter_sendPinballMessage(&instance, &pinballMessage);
+    diypinball_featureRouter_sendPinballMessage(&router, &pinballMessage);
 }

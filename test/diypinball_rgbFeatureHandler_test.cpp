@@ -33,8 +33,6 @@ extern "C" {
 }
 
 MATCHER_P(RGBStatusEqual, status, "") {
-    //printf("Arg: %d, %d, %d, %d, %d, %d, %d\n", arg.state1, arg.state1Duration, arg.state2, arg.state2Duration, arg.state3, arg.state3Duration, arg.numStates);
-    //printf("Sta: %d, %d, %d, %d, %d, %d, %d\n", status.state1, status.state1Duration, status.state2, status.state2Duration, status.state3, status.state3Duration, status.numStates);
     uint8_t fieldFlag = (arg.red == status.red) &&
         (arg.green == status.green) &&
         (arg.blue == status.blue);
@@ -42,26 +40,38 @@ MATCHER_P(RGBStatusEqual, status, "") {
     return !(!fieldFlag);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, init_zeros_structure)
-{
+class diypinball_rgbFeatureHandler_test : public testing::Test {
+    protected: 
+
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
+
+        diypinball_featureRouterInit_t routerInit;
+
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+
+        rgbFeatureHandlerInit.numRGBs = 15;
+        rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
+        rgbFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
+    }
+
     diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
     diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
+};
 
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
-    ASSERT_EQ(4, rgbFeatureHandler.featureHandlerInstance.featureType);
+TEST_F(diypinball_rgbFeatureHandler_test, init_zeros_structure)
+{
+    ASSERT_EQ(5, rgbFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, rgbFeatureHandler.rgbs[i].red);
@@ -71,31 +81,14 @@ TEST(diypinball_rgbFeatureHandler_test, init_zeros_structure)
 
     ASSERT_EQ(&router, rgbFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(&rgbFeatureHandler, rgbFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);
-    ASSERT_EQ(16, rgbFeatureHandler.numRGBs);
+    ASSERT_EQ(15, rgbFeatureHandler.numRGBs);
     ASSERT_TRUE(testRGBChangedHandler == rgbFeatureHandler.rgbChangedHandler);
     ASSERT_TRUE(diypinball_rgbFeatureHandler_millisecondTickHandler == rgbFeatureHandler.featureHandlerInstance.tickHandler);
     ASSERT_TRUE(diypinball_rgbFeatureHandler_messageReceivedHandler == rgbFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_rgbFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_rgbFeatureHandler_deinit(&rgbFeatureHandler);
 
     ASSERT_EQ(0, rgbFeatureHandler.featureHandlerInstance.featureType);
@@ -114,7 +107,7 @@ TEST(diypinball_rgbFeatureHandler_test, deinit_zeros_structure)
     ASSERT_TRUE(NULL == rgbFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, init_too_many_rgbs)
+TEST(diypinball_rgbFeatureHandler_test_other, init_too_many_rgbs)
 {
     diypinball_featureRouterInstance_t router;
     diypinball_featureRouterInit_t routerInit;
@@ -133,7 +126,7 @@ TEST(diypinball_rgbFeatureHandler_test, init_too_many_rgbs)
 
     diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
 
-    ASSERT_EQ(4, rgbFeatureHandler.featureHandlerInstance.featureType);
+    ASSERT_EQ(5, rgbFeatureHandler.featureHandlerInstance.featureType);
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, rgbFeatureHandler.rgbs[i].red);
@@ -149,33 +142,11 @@ TEST(diypinball_rgbFeatureHandler_test, init_too_many_rgbs)
     ASSERT_TRUE(diypinball_rgbFeatureHandler_messageReceivedHandler == rgbFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, request_to_function_0_to_invalid_rgb_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_0_to_invalid_rgb_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (15 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (15 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
 
@@ -185,37 +156,15 @@ TEST(diypinball_rgbFeatureHandler_test, request_to_function_0_to_invalid_rgb_doe
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, request_to_function_0_to_valid_rgb_returns_rgb_state)
+TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_0_to_valid_rgb_returns_rgb_state)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
 
-    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (0 << 4) | 0;
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (0 << 4) | 0;
     expectedCANMessage.rtr = 0;
     expectedCANMessage.dlc = 3;
     expectedCANMessage.data[0] = 0;
@@ -228,33 +177,11 @@ TEST(diypinball_rgbFeatureHandler_test, request_to_function_0_to_valid_rgb_retur
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_invalid_rgb_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_invalid_rgb_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (15 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (15 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 1;
     initiatingCANMessage.data[0] = 0;
@@ -265,33 +192,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_invalid_rgb_doe
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_and_no_data_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_and_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 0;
     initiatingCANMessage.data[0] = 0;
@@ -302,33 +207,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_and_n
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_not_enough_data_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_not_enough_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 1;
     initiatingCANMessage.data[0] = 126;
@@ -339,33 +222,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_one_and_enough_data_sets_rgb)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_one_and_enough_data_sets_rgb)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 3;
     initiatingCANMessage.data[0] = 126;
@@ -383,33 +244,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_all_data_and_read_back)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_all_data_and_read_back)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage, expectedCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 126;
@@ -426,7 +265,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     initiatingCANMessage.rtr = 1;
     initiatingCANMessage.dlc = 0;
     initiatingCANMessage.data[0] = 0;
@@ -436,7 +275,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     initiatingCANMessage.data[4] = 0;
     initiatingCANMessage.data[5] = 0;
 
-    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (0 << 4) | 0;
+    expectedCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (0 << 4) | 0;
     expectedCANMessage.rtr = 0;
     expectedCANMessage.dlc = 3;
 
@@ -450,34 +289,12 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_0_to_valid_rgb_with_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 15;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 0; i < 16; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 1;
         initiatingCANMessage.dlc = 0;
 
@@ -488,33 +305,11 @@ TEST(diypinball_rgbFeatureHandler_test, request_to_function_1_to_any_set_does_no
     }
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_reds_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_reds_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -566,33 +361,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_greens_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_greens_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (2 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (2 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -644,33 +417,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_blues_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes_blues_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (4 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (4 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -722,33 +473,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_changes
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_reds_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_reds_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (1 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (1 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -800,33 +529,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_change
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_greens_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_greens_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (3 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (3 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -878,33 +585,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_change
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_blues_on_rgbs)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_changes_blues_on_rgbs)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (5 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 8;
     initiatingCANMessage.data[0] = 16;
@@ -956,33 +641,12 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_high_set_change
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_with_no_data_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_with_no_data_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
+
     for(uint8_t i = 0; i < 6; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 0;
         initiatingCANMessage.dlc = 0;
 
@@ -993,34 +657,12 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_low_set_with_no
     }
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 16;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 6; i < 16; i++) {
-        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (i << 8) | (1 << 4) | 0;
+        initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (i << 8) | (1 << 4) | 0;
         initiatingCANMessage.rtr = 0;
         initiatingCANMessage.dlc = 8;
         initiatingCANMessage.data[0] = 16;
@@ -1039,7 +681,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_invalid_set_doe
     }
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high_set_changes_rgbs)
+TEST(diypinball_rgbFeatureHandler_test_other, message_to_function_1_to_incomplete_high_set_changes_rgbs)
 {
     MockCANSend myCANSend;
     CANSendImpl = &myCANSend;
@@ -1065,7 +707,7 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high
 
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (5 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (5 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 16;
@@ -1109,33 +751,11 @@ TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_high
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_low_set_does_nothing)
+TEST_F(diypinball_rgbFeatureHandler_test, message_to_function_1_to_incomplete_low_set_does_nothing)
 {
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockRGBFeatureHandlerHandlers myRGBFeatureHandlerHandlers;
-    RGBFeatureHandlerHandlersImpl = &myRGBFeatureHandlerHandlers;
-
-    diypinball_featureRouterInstance_t router;
-    diypinball_featureRouterInit_t routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_rgbFeatureHandlerInstance_t rgbFeatureHandler;
-    diypinball_rgbFeatureHandlerInit_t rgbFeatureHandlerInit;
-
-    rgbFeatureHandlerInit.numRGBs = 14;
-    rgbFeatureHandlerInit.rgbChangedHandler = testRGBChangedHandler;
-    rgbFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_rgbFeatureHandler_init(&rgbFeatureHandler, &rgbFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
-    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (4 << 12) | (0 << 8) | (1 << 4) | 0;
+    initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (5 << 12) | (0 << 8) | (1 << 4) | 0;
     initiatingCANMessage.rtr = 0;
     initiatingCANMessage.dlc = 6;
     initiatingCANMessage.data[0] = 16;

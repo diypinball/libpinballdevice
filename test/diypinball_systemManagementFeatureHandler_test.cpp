@@ -40,33 +40,45 @@ extern "C" {
     }
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, init_zeros_structure)
-{
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
+class diypinball_systemManagementFeatureHandler_test : public testing::Test {
+    protected: 
 
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
+    virtual void SetUp() {
+        CANSendImpl = &myCANSend;
+        SysManHandlersImpl = &mySysManHandlers;
 
-    diypinball_featureRouter_init(&router, &routerInit);
+        diypinball_featureRouterInit_t routerInit;
 
+        routerInit.boardAddress = 42;
+        routerInit.canSendHandler = testCanSendHandler;
+
+        diypinball_featureRouter_init(&router, &routerInit);
+
+        diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
+
+        systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
+        systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
+        systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
+        systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
+        systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
+        systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
+        systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
+        systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
+        systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
+        systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
+        systemManagementFeatureHandlerInit.routerInstance = &router;
+
+        diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
+    }
+
+    diypinball_featureRouterInstance_t router;
     diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
+    MockCANSend myCANSend;
+    MockSysManHandlers mySysManHandlers;
+};
 
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
+TEST_F(diypinball_systemManagementFeatureHandler_test, init_zeros_structure)
+{
     ASSERT_EQ(0, systemManagementFeatureHandler.featureHandlerInstance.featureType);
     ASSERT_EQ(1, systemManagementFeatureHandler.firmwareVersionMajor);
     ASSERT_EQ(2, systemManagementFeatureHandler.firmwareVersionMinor);
@@ -87,36 +99,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, init_zeros_structure)
     ASSERT_TRUE(diypinball_systemManagementFeatureHandler_messageReceivedHandler == systemManagementFeatureHandler.featureHandlerInstance.messageHandler);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, poweron_sends_two_messages)
+TEST_F(diypinball_systemManagementFeatureHandler_test, poweron_sends_two_messages)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage1, expectedCANMessage2;
 
     expectedCANMessage1.id = (0x0F << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -139,36 +123,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, poweron_sends_two_messages)
     diypinball_systemManagementFeatureHandler_sendPoweronMessages(&systemManagementFeatureHandler);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_0_sends_id_response)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_0_sends_id_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -185,36 +141,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_0_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_0_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_0_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (0 << 4) | 0;
@@ -227,36 +155,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_0_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_1_sends_id_response)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_1_sends_id_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -276,36 +176,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_1_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_1_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_1_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (1 << 4) | 0;
@@ -318,38 +190,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_1_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_2_sends_id_response)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_2_sends_id_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSysManHandlers mySysManHandlers;
-    SysManHandlersImpl = &mySysManHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x03 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -374,38 +216,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_2_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_2_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_2_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSysManHandlers mySysManHandlers;
-    SysManHandlersImpl = &mySysManHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (2 << 4) | 0;
@@ -419,36 +231,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_2_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_3_sends_default)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_3_sends_default)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -465,36 +249,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_3_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, setting_and_retrieving_function_3)
+TEST_F(diypinball_systemManagementFeatureHandler_test, setting_and_retrieving_function_3)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (3 << 4) | 0;
@@ -535,38 +291,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, setting_and_retrieving_func
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, set_function_3_and_millisecond_tick)
+TEST_F(diypinball_systemManagementFeatureHandler_test, set_function_3_and_millisecond_tick)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-    MockSysManHandlers mySysManHandlers;
-    SysManHandlersImpl = &mySysManHandlers;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
@@ -615,36 +341,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, set_function_3_and_millisec
     SysManHandlersImpl = NULL;
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_4_sends_serial_number_A_response)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_4_sends_serial_number_A_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -669,36 +367,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_4_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_4_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_4_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (4 << 4) | 0;
@@ -711,36 +381,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_4_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_5_sends_serial_number_B_response)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_5_sends_serial_number_B_response)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -765,36 +407,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_5_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_5_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_5_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (5 << 4) | 0;
@@ -807,36 +421,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_5_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_6_sends_hardware_signature)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_6_sends_hardware_signature)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t expectedCANMessage, initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (6 << 4) | 0;
@@ -861,36 +447,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_6_sends
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_6_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_6_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     initiatingCANMessage.id = (0x00 << 25) | (1 << 24) | (42 << 16) | (0 << 12) | (0 << 8) | (6 << 4) | 0;
@@ -903,36 +461,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_6_does_
     diypinball_featureRouter_receiveCAN(&router, &initiatingCANMessage);
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_7_through_15_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, request_to_function_7_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 7; i < 16; i++) {
@@ -947,36 +477,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, request_to_function_7_throu
     }
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_7_through_15_does_nothing)
+TEST_F(diypinball_systemManagementFeatureHandler_test, message_to_function_7_through_15_does_nothing)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    MockCANSend myCANSend;
-    CANSendImpl = &myCANSend;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_canMessage_t initiatingCANMessage;
 
     for(uint8_t i = 7; i < 16; i++) {
@@ -991,33 +493,8 @@ TEST(diypinball_systemManagementFeatureHandler_test, message_to_function_7_throu
     }
 }
 
-TEST(diypinball_systemManagementFeatureHandler_test, deinit_zeros_structure)
+TEST_F(diypinball_systemManagementFeatureHandler_test, deinit_zeros_structure)
 {
-    diypinball_featureRouterInstance router;
-    diypinball_featureRouterInit routerInit;
-
-    routerInit.boardAddress = 42;
-    routerInit.canSendHandler = testCanSendHandler;
-
-    diypinball_featureRouter_init(&router, &routerInit);
-
-    diypinball_systemManagementFeatureHandlerInstance systemManagementFeatureHandler;
-    diypinball_systemManagementFeatureHandlerInit systemManagementFeatureHandlerInit;
-
-    systemManagementFeatureHandlerInit.firmwareVersionMajor = 1;
-    systemManagementFeatureHandlerInit.firmwareVersionMinor = 2;
-    systemManagementFeatureHandlerInit.firmwareVersionPatch = 3;
-    systemManagementFeatureHandlerInit.boardSerial[0] = 65536;
-    systemManagementFeatureHandlerInit.boardSerial[1] = 65537;
-    systemManagementFeatureHandlerInit.boardSerial[2] = 65538;
-    systemManagementFeatureHandlerInit.boardSerial[3] = 65539;
-    systemManagementFeatureHandlerInit.boardSignature[0] = 16777216;
-    systemManagementFeatureHandlerInit.boardSignature[1] = 16777217;
-    systemManagementFeatureHandlerInit.powerStatusHandler = testPowerStatusHandler;
-    systemManagementFeatureHandlerInit.routerInstance = &router;
-
-    diypinball_systemManagementFeatureHandler_init(&systemManagementFeatureHandler, &systemManagementFeatureHandlerInit);
-
     diypinball_systemManagementFeatureHandler_deinit(&systemManagementFeatureHandler);
 
     ASSERT_EQ(0, systemManagementFeatureHandler.featureHandlerInstance.featureType);
