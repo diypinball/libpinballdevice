@@ -45,7 +45,6 @@ script:
 after_success:
 - coveralls --root .. -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*" -E ".*test/.*.h.*"
 before_deploy:
-- cd ..
 - mkdir deploy
 - cd deploy
 - mkdir lib
