@@ -1,6 +1,9 @@
 build
 build_*
 
+deploy
+libpinballdevice*.zip
+
 # Object files
 *.o
 *.ko
