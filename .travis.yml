@@ -49,11 +49,11 @@ before_deploy:
 - cd deploy
 - mkdir lib
 - cd lib
-- cp ../../build_cortex-m0/libpinballdevice.a ./libpinballdevice_cortext-m0.a
-- cp ../../build_cortex-m0+/libpinballdevice.a ./libpinballdevice_cortext-m0+.a
-- cp ../../build_cortex-m3/libpinballdevice.a ./libpinballdevice_cortext-m3.a
-- cp ../../build_cortex-m4/libpinballdevice.a ./libpinballdevice_cortext-m4.a
-- cp ../../build_cortex-m4f/libpinballdevice.a ./libpinballdevice_cortext-m4f.a
+- cp ../../build_cortex-m0/libpinballdevice.a ./libpinballdevice_cortex-m0.a
+- cp ../../build_cortex-m0+/libpinballdevice.a ./libpinballdevice_cortex-m0+.a
+- cp ../../build_cortex-m3/libpinballdevice.a ./libpinballdevice_cortex-m3.a
+- cp ../../build_cortex-m4/libpinballdevice.a ./libpinballdevice_cortex-m4.a
+- cp ../../build_cortex-m4f/libpinballdevice.a ./libpinballdevice_cortex-m4f.a
 - cd ../
 - mkdir include
 - cd include
