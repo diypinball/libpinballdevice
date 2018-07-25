@@ -90,7 +90,7 @@ void diypinball_featureRouter_millisecondTick(diypinball_featureRouterInstance_t
 void diypinball_featureRouter_sendPinballMessage(diypinball_featureRouterInstance_t *featureRouterInstance, diypinball_pinballMessage_t *message) {
     diypinball_canMessage_t encodedMessage;
 
-    uint8_t boardAddress;
+    uint8_t boardAddress = 0;
 
     if(message->messageType == MESSAGE_RESPONSE) {
         boardAddress = featureRouterInstance->boardAddress;
