@@ -60,7 +60,7 @@ TEST_F(diypinball_switchMatrixScanner_test, init_zeros_structure)
 {
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchMatrixScanner.switches[i].switchState);
-        ASSERT_EQ(0, switchMatrixScanner.switches[i].lastTick);
+        ASSERT_EQ(0u, switchMatrixScanner.switches[i].lastTick);
         ASSERT_EQ(0, switchMatrixScanner.switches[i].debounceLimit);
     }
 
@@ -68,7 +68,7 @@ TEST_F(diypinball_switchMatrixScanner_test, init_zeros_structure)
     ASSERT_TRUE(testSetColumnHandler == switchMatrixScanner.setColumnHandler);
     ASSERT_TRUE(testReadRowHandler == switchMatrixScanner.readRowHandler);
     ASSERT_EQ(4, switchMatrixScanner.numColumns);
-    ASSERT_EQ(0, switchMatrixScanner.lastTick);
+    ASSERT_EQ(0u, switchMatrixScanner.lastTick);
     ASSERT_EQ(0, switchMatrixScanner.currentColumn);
 }
 
@@ -78,7 +78,7 @@ TEST_F(diypinball_switchMatrixScanner_test, deinit_zeros_structure)
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchMatrixScanner.switches[i].switchState);
-        ASSERT_EQ(0, switchMatrixScanner.switches[i].lastTick);
+        ASSERT_EQ(0u, switchMatrixScanner.switches[i].lastTick);
         ASSERT_EQ(0, switchMatrixScanner.switches[i].debounceLimit);
     }
 
@@ -86,7 +86,7 @@ TEST_F(diypinball_switchMatrixScanner_test, deinit_zeros_structure)
     ASSERT_TRUE(NULL == switchMatrixScanner.setColumnHandler);
     ASSERT_TRUE(NULL == switchMatrixScanner.readRowHandler);
     ASSERT_EQ(0, switchMatrixScanner.numColumns);
-    ASSERT_EQ(0, switchMatrixScanner.lastTick);
+    ASSERT_EQ(0u, switchMatrixScanner.lastTick);
     ASSERT_EQ(0, switchMatrixScanner.currentColumn);
 }
 
@@ -107,7 +107,7 @@ TEST(diypinball_switchMatrixScanner_test_other, init_too_many_columns)
 
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchMatrixScanner.switches[i].switchState);
-        ASSERT_EQ(0, switchMatrixScanner.switches[i].lastTick);
+        ASSERT_EQ(0u, switchMatrixScanner.switches[i].lastTick);
         ASSERT_EQ(0, switchMatrixScanner.switches[i].debounceLimit);
     }
 
@@ -115,7 +115,7 @@ TEST(diypinball_switchMatrixScanner_test_other, init_too_many_columns)
     ASSERT_TRUE(testSetColumnHandler == switchMatrixScanner.setColumnHandler);
     ASSERT_TRUE(testReadRowHandler == switchMatrixScanner.readRowHandler);
     ASSERT_EQ(4, switchMatrixScanner.numColumns);
-    ASSERT_EQ(0, switchMatrixScanner.lastTick);
+    ASSERT_EQ(0u, switchMatrixScanner.lastTick);
     ASSERT_EQ(0, switchMatrixScanner.currentColumn);
 }
 
@@ -123,7 +123,7 @@ TEST_F(diypinball_switchMatrixScanner_test, set_tick)
 {
     diypinball_switchMatrixScanner_millisecondTickHandler(&switchMatrixScanner, 4242);
 
-    ASSERT_EQ(4242, switchMatrixScanner.lastTick);
+    ASSERT_EQ(4242u, switchMatrixScanner.lastTick);
 }
 
 TEST_F(diypinball_switchMatrixScanner_test, set_debounce_limit_valid)

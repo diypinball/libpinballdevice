@@ -60,15 +60,15 @@ TEST_F(diypinball_lampMatrixScanner_test, init_zeros_structure)
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3Duration);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.numStates);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].lastTick);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].currentPhase);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].lastTick);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].currentPhase);
     }
 
     ASSERT_TRUE(testSetColumnHandler == lampMatrixScanner.setColumnHandler);
     ASSERT_TRUE(testSetRowHandler == lampMatrixScanner.setRowHandler);
     ASSERT_EQ(4, lampMatrixScanner.numColumns);
     ASSERT_EQ(0, lampMatrixScanner.currentColumn);
-    ASSERT_EQ(0, lampMatrixScanner.lastTick);
+    ASSERT_EQ(0u, lampMatrixScanner.lastTick);
 }
 
 TEST_F(diypinball_lampMatrixScanner_test, deinit_zeros_structure)
@@ -83,15 +83,15 @@ TEST_F(diypinball_lampMatrixScanner_test, deinit_zeros_structure)
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3Duration);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.numStates);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].lastTick);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].currentPhase);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].lastTick);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].currentPhase);
     }
 
     ASSERT_TRUE(NULL == lampMatrixScanner.setColumnHandler);
     ASSERT_TRUE(NULL == lampMatrixScanner.setRowHandler);
     ASSERT_EQ(0, lampMatrixScanner.numColumns);
     ASSERT_EQ(0, lampMatrixScanner.currentColumn);
-    ASSERT_EQ(0, lampMatrixScanner.lastTick);
+    ASSERT_EQ(0u, lampMatrixScanner.lastTick);
 }
 
 TEST(diypinball_lampMatrixScanner_test_other, init_too_many_columns)
@@ -116,15 +116,15 @@ TEST(diypinball_lampMatrixScanner_test_other, init_too_many_columns)
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.state3Duration);
         ASSERT_EQ(0, lampMatrixScanner.lamps[i].lampState.numStates);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].lastTick);
-        ASSERT_EQ(0, lampMatrixScanner.lamps[i].currentPhase);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].lastTick);
+        ASSERT_EQ(0u, lampMatrixScanner.lamps[i].currentPhase);
     }
 
     ASSERT_TRUE(testSetColumnHandler == lampMatrixScanner.setColumnHandler);
     ASSERT_TRUE(testSetRowHandler == lampMatrixScanner.setRowHandler);
     ASSERT_EQ(4, lampMatrixScanner.numColumns);
     ASSERT_EQ(0, lampMatrixScanner.currentColumn);
-    ASSERT_EQ(0, lampMatrixScanner.lastTick);
+    ASSERT_EQ(0u, lampMatrixScanner.lastTick);
 }
 
 TEST_F(diypinball_lampMatrixScanner_test, set_lamp_state_valid)
@@ -148,8 +148,8 @@ TEST_F(diypinball_lampMatrixScanner_test, set_lamp_state_valid)
     ASSERT_EQ(225, lampMatrixScanner.lamps[0].lampState.state3);
     ASSERT_EQ(110, lampMatrixScanner.lamps[0].lampState.state3Duration);
     ASSERT_EQ(3, lampMatrixScanner.lamps[0].lampState.numStates);
-    ASSERT_EQ(0, lampMatrixScanner.lamps[0].lastTick);
-    ASSERT_EQ(0, lampMatrixScanner.lamps[0].currentPhase);
+    ASSERT_EQ(0u, lampMatrixScanner.lamps[0].lastTick);
+    ASSERT_EQ(0u, lampMatrixScanner.lamps[0].currentPhase);
 }
 
 TEST_F(diypinball_lampMatrixScanner_test, set_lamp_state_invalid)
@@ -181,7 +181,7 @@ TEST_F(diypinball_lampMatrixScanner_test, set_tick)
 {
     diypinball_lampMatrixScanner_millisecondTickHandler(&lampMatrixScanner, 4242);
 
-    ASSERT_EQ(4242, lampMatrixScanner.lastTick);
+    ASSERT_EQ(4242u, lampMatrixScanner.lastTick);
 }
 
 TEST_F(diypinball_lampMatrixScanner_test, isr_flow) {

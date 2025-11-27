@@ -93,7 +93,7 @@ TEST_F(diypinball_switchFeatureHandler_test, init_zeros_structure)
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchFeatureHandler.switches[i].lastState);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].messageTriggerMask);
-        ASSERT_EQ(0, switchFeatureHandler.switches[i].lastTick);
+        ASSERT_EQ(0u, switchFeatureHandler.switches[i].lastTick);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].pollingInterval);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].debounceLimit);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].ruleMask);
@@ -129,7 +129,7 @@ TEST_F(diypinball_switchFeatureHandler_test, deinit_zeros_structure)
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchFeatureHandler.switches[i].lastState);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].messageTriggerMask);
-        ASSERT_EQ(0, switchFeatureHandler.switches[i].lastTick);
+        ASSERT_EQ(0u, switchFeatureHandler.switches[i].lastTick);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].pollingInterval);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].debounceLimit);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].ruleMask);
@@ -181,7 +181,7 @@ TEST(diypinball_switchFeatureHandler_test_other, init_too_many_switches)
     for(uint8_t i = 0; i < 16; i++) {
         ASSERT_EQ(0, switchFeatureHandler.switches[i].lastState);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].messageTriggerMask);
-        ASSERT_EQ(0, switchFeatureHandler.switches[i].lastTick);
+        ASSERT_EQ(0u, switchFeatureHandler.switches[i].lastTick);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].pollingInterval);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].debounceLimit);
         ASSERT_EQ(0, switchFeatureHandler.switches[i].ruleMask);

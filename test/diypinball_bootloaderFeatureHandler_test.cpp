@@ -118,10 +118,10 @@ TEST_F(diypinball_bootloaderFeatureHandler_test, init_sets_up_structure)
     ASSERT_EQ(1, bootloaderFeatureHandler.applicationVersionMajor);
     ASSERT_EQ(2, bootloaderFeatureHandler.applicationVersionMinor);
     ASSERT_EQ(3, bootloaderFeatureHandler.applicationVersionPatch);
-    ASSERT_EQ(2048, bootloaderFeatureHandler.flashPageSize);
-    ASSERT_EQ(1024, bootloaderFeatureHandler.flashBufferSize);
-    ASSERT_EQ(0x02002000, bootloaderFeatureHandler.applicationBaseAddress);
-    ASSERT_EQ(131072, bootloaderFeatureHandler.flashSize);
+    ASSERT_EQ(2048u, bootloaderFeatureHandler.flashPageSize);
+    ASSERT_EQ(1024u, bootloaderFeatureHandler.flashBufferSize);
+    ASSERT_EQ(0x02002000u, bootloaderFeatureHandler.applicationBaseAddress);
+    ASSERT_EQ(131072u, bootloaderFeatureHandler.flashSize);
 
     ASSERT_EQ(&router, bootloaderFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_TRUE(testRebootHandler == bootloaderFeatureHandler.rebootHandler);
@@ -143,10 +143,10 @@ TEST_F(diypinball_bootloaderFeatureHandler_test, deinit_zeros_structure)
     ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionMajor);
     ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionMinor);
     ASSERT_EQ(0, bootloaderFeatureHandler.applicationVersionPatch);
-    ASSERT_EQ(0, bootloaderFeatureHandler.flashPageSize);
-    ASSERT_EQ(0, bootloaderFeatureHandler.flashBufferSize);
-    ASSERT_EQ(0, bootloaderFeatureHandler.applicationBaseAddress);
-    ASSERT_EQ(0, bootloaderFeatureHandler.flashSize);
+    ASSERT_EQ(0u, bootloaderFeatureHandler.flashPageSize);
+    ASSERT_EQ(0u, bootloaderFeatureHandler.flashBufferSize);
+    ASSERT_EQ(0u, bootloaderFeatureHandler.applicationBaseAddress);
+    ASSERT_EQ(0u, bootloaderFeatureHandler.flashSize);
 
     ASSERT_EQ(NULL, bootloaderFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(NULL, bootloaderFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);

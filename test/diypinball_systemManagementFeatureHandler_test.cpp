@@ -83,15 +83,15 @@ TEST_F(diypinball_systemManagementFeatureHandler_test, init_zeros_structure)
     ASSERT_EQ(1, systemManagementFeatureHandler.firmwareVersionMajor);
     ASSERT_EQ(2, systemManagementFeatureHandler.firmwareVersionMinor);
     ASSERT_EQ(3, systemManagementFeatureHandler.firmwareVersionPatch);
-    ASSERT_EQ(65536, systemManagementFeatureHandler.boardSerial[0]);
-    ASSERT_EQ(65537, systemManagementFeatureHandler.boardSerial[1]);
-    ASSERT_EQ(65538, systemManagementFeatureHandler.boardSerial[2]);
-    ASSERT_EQ(65539, systemManagementFeatureHandler.boardSerial[3]);
-    ASSERT_EQ(16777216, systemManagementFeatureHandler.boardSignature[0]);
-    ASSERT_EQ(16777217, systemManagementFeatureHandler.boardSignature[1]);
+    ASSERT_EQ(65536u, systemManagementFeatureHandler.boardSerial[0]);
+    ASSERT_EQ(65537u, systemManagementFeatureHandler.boardSerial[1]);
+    ASSERT_EQ(65538u, systemManagementFeatureHandler.boardSerial[2]);
+    ASSERT_EQ(65539u, systemManagementFeatureHandler.boardSerial[3]);
+    ASSERT_EQ(16777216u, systemManagementFeatureHandler.boardSignature[0]);
+    ASSERT_EQ(16777217u, systemManagementFeatureHandler.boardSignature[1]);
 
     ASSERT_EQ(0, systemManagementFeatureHandler.powerStatusPollingInterval);
-    ASSERT_EQ(0, systemManagementFeatureHandler.lastTick);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.lastTick);
 
     ASSERT_EQ(&router, systemManagementFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_TRUE(testPowerStatusHandler == systemManagementFeatureHandler.powerStatusHandler);
@@ -501,15 +501,15 @@ TEST_F(diypinball_systemManagementFeatureHandler_test, deinit_zeros_structure)
     ASSERT_EQ(0, systemManagementFeatureHandler.firmwareVersionMajor);
     ASSERT_EQ(0, systemManagementFeatureHandler.firmwareVersionMinor);
     ASSERT_EQ(0, systemManagementFeatureHandler.firmwareVersionPatch);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSerial[0]);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSerial[1]);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSerial[2]);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSerial[3]);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSignature[0]);
-    ASSERT_EQ(0, systemManagementFeatureHandler.boardSignature[1]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSerial[0]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSerial[1]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSerial[2]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSerial[3]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSignature[0]);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.boardSignature[1]);
 
     ASSERT_EQ(0, systemManagementFeatureHandler.powerStatusPollingInterval);
-    ASSERT_EQ(0, systemManagementFeatureHandler.lastTick);
+    ASSERT_EQ(0u, systemManagementFeatureHandler.lastTick);
 
     ASSERT_EQ(NULL, systemManagementFeatureHandler.featureHandlerInstance.routerInstance);
     ASSERT_EQ(NULL, systemManagementFeatureHandler.featureHandlerInstance.concreteFeatureHandlerInstance);

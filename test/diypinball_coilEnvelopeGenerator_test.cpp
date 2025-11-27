@@ -51,13 +51,13 @@ TEST_F(diypinball_coilEnvelopeGenerator_test, init_zeros_structure)
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].attackDuration);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainState);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainDuration);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastTicks[i]);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastPhases[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastTicks[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastPhases[i]);
     }
 
     ASSERT_TRUE(testCoilStateHandler == coilEnvelopeGenerator.coilStateHandler);
     ASSERT_EQ(8, coilEnvelopeGenerator.numCoils);
-    ASSERT_EQ(0, coilEnvelopeGenerator.lastTick);
+    ASSERT_EQ(0u, coilEnvelopeGenerator.lastTick);
 }
 
 TEST_F(diypinball_coilEnvelopeGenerator_test, deinit_zeros_structure)
@@ -69,13 +69,13 @@ TEST_F(diypinball_coilEnvelopeGenerator_test, deinit_zeros_structure)
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].attackDuration);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainState);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainDuration);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastTicks[i]);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastPhases[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastTicks[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastPhases[i]);
     }
 
     ASSERT_TRUE(NULL == coilEnvelopeGenerator.coilStateHandler);
     ASSERT_EQ(0, coilEnvelopeGenerator.numCoils);
-    ASSERT_EQ(0, coilEnvelopeGenerator.lastTick);
+    ASSERT_EQ(0u, coilEnvelopeGenerator.lastTick);
 }
 
 TEST(diypinball_coilEnvelopeGenerator_test_other, init_too_many_columns)
@@ -96,13 +96,13 @@ TEST(diypinball_coilEnvelopeGenerator_test_other, init_too_many_columns)
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].attackDuration);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainState);
         ASSERT_EQ(0, coilEnvelopeGenerator.coils[i].sustainDuration);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastTicks[i]);
-        ASSERT_EQ(0, coilEnvelopeGenerator.lastPhases[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastTicks[i]);
+        ASSERT_EQ(0u, coilEnvelopeGenerator.lastPhases[i]);
     }
 
     ASSERT_TRUE(testCoilStateHandler == coilEnvelopeGenerator.coilStateHandler);
     ASSERT_EQ(16, coilEnvelopeGenerator.numCoils);
-    ASSERT_EQ(0, coilEnvelopeGenerator.lastTick);
+    ASSERT_EQ(0u, coilEnvelopeGenerator.lastTick);
 }
 
 TEST_F(diypinball_coilEnvelopeGenerator_test, setTick)
@@ -118,7 +118,7 @@ TEST_F(diypinball_coilEnvelopeGenerator_test, setTick)
 
     diypinball_coilEnvelopeGenerator_millisecondTickHandler(&coilEnvelopeGenerator, 1);
 
-    ASSERT_EQ(1, coilEnvelopeGenerator.lastTick);
+    ASSERT_EQ(1u, coilEnvelopeGenerator.lastTick);
 }
 
 TEST_F(diypinball_coilEnvelopeGenerator_test, set_coil_state_valid)
@@ -144,8 +144,8 @@ TEST_F(diypinball_coilEnvelopeGenerator_test, set_coil_state_valid)
 
     diypinball_coilEnvelopeGenerator_setCoilState(&coilEnvelopeGenerator, 0, &status);
 
-    ASSERT_EQ(1, coilEnvelopeGenerator.lastTicks[0]);
-    ASSERT_EQ(1, coilEnvelopeGenerator.lastPhases[0]);
+    ASSERT_EQ(1u, coilEnvelopeGenerator.lastTicks[0]);
+    ASSERT_EQ(1u, coilEnvelopeGenerator.lastPhases[0]);
     ASSERT_EQ(255, coilEnvelopeGenerator.coils[0].attackState);
     ASSERT_EQ(100, coilEnvelopeGenerator.coils[0].attackDuration);
     ASSERT_EQ(127, coilEnvelopeGenerator.coils[0].sustainState);
